@@ -43,6 +43,11 @@ final class TabManager: ObservableObject {
     init(sessionID: UUID? = nil) {
         self.sessionID = sessionID
 
+        // 기본(첫) 창에서 한 번, 오래된 보조 창 세션 디렉터리를 정리
+        if sessionID == nil {
+            sessionStore.pruneOrphanedWindowSessions()
+        }
+
         // 시작 시 세션 복원
         restoreFromSession()
 
@@ -72,7 +77,8 @@ final class TabManager: ObservableObject {
     }
 
     deinit {
-        forcePersist()
+        // 영속화는 onDisappear(창 닫힘)와 willTerminate(앱 종료) 옵저버가 메인 스레드에서
+        // 이미 처리한다. deinit은 임의 스레드에서 실행될 수 있어 여기서 디스크 I/O를 하지 않는다.
         if let terminationObserver {
             NotificationCenter.default.removeObserver(terminationObserver)
         }
@@ -163,9 +169,10 @@ final class TabManager: ObservableObject {
         guard let index = tabs.firstIndex(where: { $0.id == id }) else { return }
         if tabs[index].content != newContent {
             tabs[index].content = newContent
-            if !tabs[index].isDirty {
-                tabs[index].isDirty = true
-            }
+            tabs[index].isDirty = true
+            // 사용자가 직접 내용을 입력했으므로 더 이상 '원본 읽기 실패' 상태가 아니다.
+            // (이 플래그를 비워야 편집 내용이 세션 스크래치로 저장된다.)
+            tabs[index].loadError = false
         }
     }
 
@@ -173,8 +180,9 @@ final class TabManager: ObservableObject {
 
     @discardableResult
     func openFile(url: URL, preferredEncoding: TextEncoding? = nil) -> Bool {
-        // 이미 같은 파일이 열려 있으면 해당 탭으로 이동
-        if let existing = tabs.firstIndex(where: { $0.fileURL == url }) {
+        // 이미 같은 파일이 열려 있으면 해당 탭으로 이동 (경로 표준화로 심볼릭/북마크 차이 흡수)
+        let target = url.standardizedFileURL
+        if let existing = tabs.firstIndex(where: { $0.fileURL?.standardizedFileURL == target }) {
             selectedTabID = tabs[existing].id
             return true
         }

@@ -272,6 +272,28 @@ final class SessionStore: ObservableObject {
         }
     }
 
+    /// 닫힌 보조 창의 세션 디렉터리(Sessions/Windows/<uuid>)는 명시적으로 삭제되지 않아
+    /// 누적될 수 있다. 오래된(기본 30일) 디렉터리를 정리해 무한 증가와 미저장 텍스트 잔존을 막는다.
+    /// macOS 상태 복원은 최근 종료만 대상으로 하므로 오래된 디렉터리 삭제는 복원에 영향을 주지 않는다.
+    func pruneOrphanedWindowSessions(olderThanDays days: Int = 30) {
+        let windowsDir = sessionRoot.appendingPathComponent("Windows", isDirectory: true)
+        let fm = fileManager
+        let cutoff = Date().addingTimeInterval(-Double(days) * 86_400)
+        ioQueue.async {
+            guard let entries = try? fm.contentsOfDirectory(
+                at: windowsDir,
+                includingPropertiesForKeys: [.contentModificationDateKey],
+                options: [.skipsHiddenFiles]
+            ) else { return }
+            for dir in entries {
+                let modified = (try? dir.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+                if modified < cutoff {
+                    try? fm.removeItem(at: dir)
+                }
+            }
+        }
+    }
+
     private func sessionKey(for sessionID: UUID?) -> String {
         sessionID?.uuidString ?? "primary"
     }

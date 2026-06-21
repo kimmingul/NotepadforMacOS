@@ -129,6 +129,16 @@ struct EditorTextView: NSViewRepresentable {
             case .printDocument:
                 printText(in: textView)
             }
+
+            // 일회성 명령을 소비한다. 탭 전환 시 .id로 Coordinator가 재생성되면
+            // lastHandledCommandID가 초기화되어 같은 명령이 다시 실행되는 것을 방지.
+            // (@Published를 뷰 업데이트 중에 변경하지 않도록 비동기로 클리어)
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                if self.tabManager?.pendingEditorCommand?.id == command.id {
+                    self.tabManager?.pendingEditorCommand = nil
+                }
+            }
         }
 
         // MARK: Find / Replace
@@ -245,6 +255,8 @@ struct EditorTextView: NSViewRepresentable {
         private func setEntireText(_ text: String, in textView: NSTextView) {
             guard textView.string != text else { return }
             textView.string = text
+            // 디스크에서 다시 읽은 것이므로 이전 버퍼 기준의 실행취소 기록을 비운다.
+            textView.undoManager?.removeAllActions()
             textView.setSelectedRange(NSRange(location: 0, length: 0))
             textView.scrollRangeToVisible(NSRange(location: 0, length: 0))
             updateCursor(for: textView)

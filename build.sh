@@ -116,6 +116,18 @@ fix_app_icon() {
 
   # Help macOS notice the new icon
   touch "$app_path"
+
+  # Replacing AppIcon.icns + touch after Xcode signed the bundle invalidates the
+  # code signature ("a sealed resource is missing or invalid"), which prevents a
+  # sandboxed app from launching. Re-sign (ad-hoc) with the real entitlements.
+  # The Developer ID path in do_dist re-signs again afterward.
+  if codesign --force --options runtime \
+       --entitlements "$SCRIPT_DIR/NotepadForMacOS/Notepad.entitlements" \
+       --sign - "$app_path" >/dev/null 2>&1; then
+    success "Re-signed bundle (ad-hoc) after icon fix"
+  else
+    warn "Re-sign after icon fix failed"
+  fi
 }
 
 build_target() {
