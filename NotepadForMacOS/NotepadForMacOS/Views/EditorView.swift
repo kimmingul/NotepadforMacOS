@@ -10,6 +10,23 @@ import AppKit
 /// 타이핑은 `insertText(_:)` 경로라 이 오버라이드의 영향을 받지 않으므로,
 /// "붙여넣을 때만 맨 앞으로" 동작을 안전하게 구현할 수 있다.
 final class NotepadTextView: NSTextView {
+    private var didAlignInitialScroll = false
+
+    /// 탭 복귀(.id로 뷰 재생성) 시 가로 스크롤이 여백폭만큼 밀려 첫 글자가 좌측
+    /// 테두리에 붙던 문제를, 화면이 그려지기 **직전**에 동기로 바로잡는다.
+    /// (이전엔 async로 그린 뒤 고쳐서 "여백 없음 → 여백 있음" 2단계 깜박임이 있었다.)
+    override func viewWillDraw() {
+        super.viewWillDraw()
+        guard !didAlignInitialScroll,
+              let scrollView = enclosingScrollView,
+              let container = textContainer else { return }
+        didAlignInitialScroll = true
+        layoutManager?.ensureLayout(for: container)
+        let clip = scrollView.contentView
+        clip.scroll(to: NSPoint(x: 0, y: clip.bounds.origin.y))
+        scrollView.reflectScrolledClipView(clip)
+    }
+
     private func revealPasteStart(from insertLoc: Int) {
         guard let scrollView = enclosingScrollView,
               let layoutManager, let textContainer else { return }
@@ -87,6 +104,10 @@ struct EditorTextView: NSViewRepresentable {
         scrollView.autohidesScrollers = false
         textView.isVerticallyResizable = true
         textView.minSize = NSSize(width: 0, height: 0)
+        // 상·하·좌·우 일관된 작은 여백. 좌측 여백을 lineFragmentPadding 대신 inset으로
+        // 통일해 상단 여백과 동일하게 맞춘다.
+        textView.textContainerInset = NSSize(width: 5, height: 5)
+        textView.textContainer?.lineFragmentPadding = 0
         // autoresizingMask는 wrap 여부에 따라 applyWrap에서 설정한다
         // (비-wrap에서 [.width]는 콘텐츠 폭을 클립 폭에 묶어 가로 스크롤을 막는다).
         textView.isRichText = false
@@ -104,17 +125,9 @@ struct EditorTextView: NSViewRepresentable {
         applyWrap(to: textView, scrollView: scrollView)
         context.coordinator.textView = textView
 
-        // 탭 복귀(.id로 뷰 재생성) 시 가로 스크롤이 여백폭(lineFragmentPadding≈5px)만큼
-        // 밀려 첫 글자가 좌측 테두리에 붙는 문제 방지: 레이아웃 후 줄 맨 앞(x=0)으로 정렬한다.
-        // (makeNSView는 생성 시 1회만 실행되므로 편집/타이핑에는 영향이 없다.)
+        // 초기 커서를 맨 앞으로. 가로 정렬(x=0)은 깜박임 없이 첫 그리기 직전에
+        // NotepadTextView.viewWillDraw()가 동기로 수행한다.
         textView.setSelectedRange(NSRange(location: 0, length: 0))
-        DispatchQueue.main.async {
-            guard let container = textView.textContainer else { return }
-            textView.layoutManager?.ensureLayout(for: container)
-            let clip = scrollView.contentView
-            clip.scroll(to: NSPoint(x: 0, y: clip.bounds.origin.y))
-            scrollView.reflectScrolledClipView(clip)
-        }
         return scrollView
     }
 
