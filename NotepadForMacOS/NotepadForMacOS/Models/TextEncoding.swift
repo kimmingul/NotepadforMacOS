@@ -61,6 +61,12 @@ enum TextEncoding: String, CaseIterable, Codable, Identifiable {
         return data
     }
 
+    /// 손실 없이 이 인코딩으로 표현할 수 있는 문자열인지 검사.
+    /// (예: 이모지/한자를 EUC-KR로 변환하려는 경우 false)
+    func canEncode(_ string: String) -> Bool {
+        string.data(using: foundationEncoding, allowLossyConversion: false) != nil
+    }
+
     /// 파일 확장자나 내용 기반 간단 자동 감지 힌트 (MVP에서는 호출 시 옵션으로 사용)
     static func detect(from data: Data, suggested: TextEncoding? = nil) -> TextEncoding {
         if suggested != nil { return suggested! }

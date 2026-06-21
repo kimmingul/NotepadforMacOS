@@ -2,10 +2,17 @@ import Foundation
 import SwiftUI
 
 /// 단일 탭/문서 모델
-/// Windows 11 Notepad처럼 파일 경로 + 작업 중인 내용(content) + 인코딩/줄바꿈 상태를 가짐
-struct Document: Identifiable, Codable, Equatable {
+/// Windows 11 Notepad처럼 파일 경로 + 작업 중인 내용(content) + 인코딩/줄바꿈 상태를 가짐.
+///
+/// 영속화는 `SessionStore`가 담당한다(파일 경로 대신 보안 스코프 북마크를 저장하므로
+/// 이 타입은 `Codable`을 직접 채택하지 않는다).
+struct Document: Identifiable, Equatable {
     var id = UUID()
     var fileURL: URL?
+
+    /// 샌드박스에서 재실행 후에도 `fileURL`에 접근하기 위한 앱 스코프 보안 북마크.
+    /// 파일을 열거나 저장할 때 생성하며, 세션에 함께 저장된다.
+    var securityScopedBookmark: Data?
 
     /// 실제 편집 중인 텍스트 (항상 Unicode String)
     var content: String
@@ -18,6 +25,10 @@ struct Document: Identifiable, Codable, Equatable {
 
     /// 세션 복원을 위한 생성 타임스탬프 (정렬용)
     var createdAt: Date = Date()
+
+    /// 복원 시 원본 파일을 읽지 못했음을 나타내는 일시 플래그(영속화하지 않음).
+    /// true이면 화면의 빈 내용으로 원본을 덮어쓰지 않도록 저장 경로에서 사용자에게 확인한다.
+    var loadError: Bool = false
 
     // MARK: - Derived
 
@@ -44,44 +55,17 @@ struct Document: Identifiable, Codable, Equatable {
     // MARK: - Init
 
     init(fileURL: URL? = nil,
+         securityScopedBookmark: Data? = nil,
          content: String = "",
          encoding: TextEncoding = .utf8,
          lineEnding: LineEnding = .lf,
          isDirty: Bool = false) {
         self.fileURL = fileURL
+        self.securityScopedBookmark = securityScopedBookmark
         self.content = content
         self.encoding = encoding
         self.lineEnding = lineEnding
         self.isDirty = isDirty
-    }
-
-    // Codable 수동 구현 (URL은 bookmark 등 처리 필요하지만 간단히 path 저장)
-    enum CodingKeys: String, CodingKey {
-        case id, filePath, content, encoding, lineEnding, isDirty, createdAt
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decode(UUID.self, forKey: .id)
-        if let path = try container.decodeIfPresent(String.self, forKey: .filePath) {
-            fileURL = URL(fileURLWithPath: path)
-        }
-        content = try container.decode(String.self, forKey: .content)
-        encoding = try container.decode(TextEncoding.self, forKey: .encoding)
-        lineEnding = try container.decode(LineEnding.self, forKey: .lineEnding)
-        isDirty = try container.decode(Bool.self, forKey: .isDirty)
-        createdAt = try container.decode(Date.self, forKey: .createdAt)
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(fileURL?.path, forKey: .filePath)
-        try container.encode(content, forKey: .content)
-        try container.encode(encoding, forKey: .encoding)
-        try container.encode(lineEnding, forKey: .lineEnding)
-        try container.encode(isDirty, forKey: .isDirty)
-        try container.encode(createdAt, forKey: .createdAt)
     }
 
     // MARK: - Helpers
@@ -89,30 +73,21 @@ struct Document: Identifiable, Codable, Equatable {
     /// 파일에서 다시 읽어서 content 교체 (Reopen with encoding 용)
     mutating func reloadFromDisk(using newEncoding: TextEncoding) -> Bool {
         guard let url = fileURL else { return false }
-        do {
-            let data = try Data(contentsOf: url)
-            let detected = TextEncoding.detect(from: data, suggested: newEncoding)
-            if let newContent = detected.decode(data: data) {
-                content = newContent
-                encoding = newEncoding
-                lineEnding = LineEnding.detect(in: newContent)
-                isDirty = false   // 디스크와 동기화된 상태로 간주 (사용자 의도에 따라 dirty 유지 가능)
-                return true
-            }
-        } catch {
-            print("Reload failed: \(error)")
+        var didReload = false
+        SecurityScopedFile.access(url, bookmark: securityScopedBookmark) { resolvedURL in
+            guard let data = try? Data(contentsOf: resolvedURL),
+                  let newContent = newEncoding.decode(data: data) else { return }
+            content = newContent
+            encoding = newEncoding
+            lineEnding = LineEnding.detect(in: newContent)
+            isDirty = false   // 디스크와 동기화된 상태로 간주
+            loadError = false
+            didReload = true
         }
-        return false
+        return didReload
     }
 
-    /// 현재 content를 주어진 인코딩으로 변환 시도 (Convert)
-    mutating func convertToEncoding(_ newEncoding: TextEncoding) {
-        // 간단 구현: 인코딩 플래그만 변경. 실제 변환은 저장 시 수행.
-        // 필요시 여기서 roundtrip encode/decode로 시뮬레이션 가능.
-        encoding = newEncoding
-        isDirty = true
-    }
-
+    // 동등성은 id 기준 (탭 식별용). 내용 변경 감지는 @Published tabs 발행으로 처리.
     static func == (lhs: Document, rhs: Document) -> Bool {
         lhs.id == rhs.id
     }

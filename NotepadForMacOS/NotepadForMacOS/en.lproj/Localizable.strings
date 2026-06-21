@@ -75,6 +75,8 @@
 "unsavedChanges.informative" = "If you don't save, your changes will be lost.";
 "saveFailed.message" = "Could not save \"%@\".";
 "saveFailed.informative" = "Check that the file is writable and that the selected encoding can represent the document contents.";
+"overwriteUnreadable.message" = "Overwrite \"%@\" with empty contents?";
+"overwriteUnreadable.informative" = "The original file could not be read when this tab was restored, so it appears empty. Saving now will replace the file's contents on disk.";
 
 "License" = "License";
 "View License" = "View License...";

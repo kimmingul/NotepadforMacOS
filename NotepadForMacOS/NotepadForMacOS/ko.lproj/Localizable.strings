@@ -75,6 +75,8 @@
 "unsavedChanges.informative" = "저장하지 않으면 변경사항이 손실됩니다.";
 "saveFailed.message" = "\"%@\"을(를) 저장할 수 없습니다.";
 "saveFailed.informative" = "파일이 쓰기 가능한지, 선택한 인코딩이 문서 내용을 표현할 수 있는지 확인하세요.";
+"overwriteUnreadable.message" = "\"%@\"을(를) 빈 내용으로 덮어쓸까요?";
+"overwriteUnreadable.informative" = "이 탭을 복원할 때 원본 파일을 읽지 못해 비어 있는 상태입니다. 지금 저장하면 디스크의 원본 내용이 대체됩니다.";
 
 "License" = "라이선스";
 "View License" = "라이선스 보기...";

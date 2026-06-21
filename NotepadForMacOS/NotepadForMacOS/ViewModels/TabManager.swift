@@ -34,27 +34,6 @@ final class TabManager: ObservableObject {
     init(sessionID: UUID? = nil) {
         self.sessionID = sessionID
 
-        // Dump menu titles to debug file (guaranteed early)
-        do {
-            let path = FileManager.default.temporaryDirectory.appendingPathComponent("Notepad_Debug.txt").path
-            var c = "[\(Date())] TabManager init. Dumping main menu...\n"
-            if let main = NSApp.mainMenu {
-                c += "Main menus:\n"
-                for m in main.items {
-                    c += "  \(m.title)\n"
-                    if m.title == "보기" || m.title == "View" {
-                        if let sub = m.submenu {
-                            c += "    === 보기 submenu ===\n"
-                            for it in sub.items {
-                                c += "    \(it.title)\n"
-                            }
-                        }
-                    }
-                }
-            }
-            try c.write(toFile: path, atomically: true, encoding: .utf8)
-        } catch {}
-
         // 시작 시 세션 복원
         restoreFromSession()
 
@@ -191,33 +170,34 @@ final class TabManager: ObservableObject {
 
     // MARK: - File Operations
 
-    func openFile(url: URL, preferredEncoding: TextEncoding? = nil) {
-        do {
-            let data = try Data(contentsOf: url)
-            let encoding = preferredEncoding ?? TextEncoding.detect(from: data)
-            let content = encoding.decode(data: data) ?? String(data: data, encoding: .utf8) ?? ""
-
-            let le = LineEnding.detect(in: content)
-
-            // 이미 같은 파일이 열려 있으면 해당 탭으로 이동
-            if let existing = tabs.firstIndex(where: { $0.fileURL == url }) {
-                selectedTabID = tabs[existing].id
-                return
-            }
-
-            let doc = Document(
-                fileURL: url,
-                content: content,
-                encoding: encoding,
-                lineEnding: le,
-                isDirty: false
-            )
-            tabs.append(doc)
-            selectedTabID = doc.id
-            persistSession()
-        } catch {
-            print("Failed to open file: \(error)")
+    @discardableResult
+    func openFile(url: URL, preferredEncoding: TextEncoding? = nil) -> Bool {
+        // 이미 같은 파일이 열려 있으면 해당 탭으로 이동
+        if let existing = tabs.firstIndex(where: { $0.fileURL == url }) {
+            selectedTabID = tabs[existing].id
+            return true
         }
+
+        // 재실행 후에도 접근하기 위해 보안 스코프 북마크를 생성(권한이 있는 현재 URL 기준).
+        let bookmark = SecurityScopedFile.makeBookmark(for: url)
+        guard let data = try? Data(contentsOf: url) else { return false }
+
+        let encoding = preferredEncoding ?? TextEncoding.detect(from: data)
+        let content = encoding.decode(data: data) ?? String(data: data, encoding: .utf8) ?? ""
+        let le = LineEnding.detect(in: content)
+
+        let doc = Document(
+            fileURL: url,
+            securityScopedBookmark: bookmark,
+            content: content,
+            encoding: encoding,
+            lineEnding: le,
+            isDirty: false
+        )
+        tabs.append(doc)
+        selectedTabID = doc.id
+        persistSession()
+        return true
     }
 
     /// 현재 선택 탭 저장
@@ -251,20 +231,33 @@ final class TabManager: ObservableObject {
         let normalizedContent = doc.lineEnding.normalize(doc.content)
 
         guard let data = doc.encoding.encode(normalizedContent) else {
-            print("Encoding failed for save")
+            // 선택한 인코딩으로 표현할 수 없는 문자가 있음 (호출 측에서 알림 표시)
             return false
         }
 
-        do {
-            try data.write(to: targetURL!, options: .atomic)
-            tabs[index].fileURL = targetURL
-            tabs[index].isDirty = false
-            persistSession()
-            return true
-        } catch {
-            print("Save failed: \(error)")
-            return false
+        guard let destination = targetURL else { return false }
+        let isNewTarget = (url != nil && url != doc.fileURL)
+
+        // 기존 파일 재저장은 보안 스코프 북마크로 접근; Save As(새 URL)는 패널이 권한 부여.
+        var wrote = false
+        if isNewTarget || doc.securityScopedBookmark == nil {
+            wrote = ((try? data.write(to: destination, options: .atomic)) != nil)
+        } else {
+            SecurityScopedFile.access(destination, bookmark: doc.securityScopedBookmark) { resolved in
+                wrote = ((try? data.write(to: resolved, options: .atomic)) != nil)
+            }
         }
+        guard wrote else { return false }
+
+        tabs[index].fileURL = destination
+        tabs[index].isDirty = false
+        tabs[index].loadError = false
+        // 새 위치이거나 북마크가 없으면 재실행 후 접근을 위해 북마크 생성/갱신
+        if isNewTarget || tabs[index].securityScopedBookmark == nil {
+            tabs[index].securityScopedBookmark = SecurityScopedFile.makeBookmark(for: destination)
+        }
+        persistSession()
+        return true
     }
 
     func saveAs(url: URL, encoding: TextEncoding? = nil, lineEnding: LineEnding? = nil) -> Bool {
@@ -295,13 +288,18 @@ final class TabManager: ObservableObject {
         persistSession()
     }
 
-    /// Convert to encoding (현재 내용 기준으로 인코딩 변경)
-    func convertSelectedToEncoding(_ newEncoding: TextEncoding) {
+    /// Convert to encoding (현재 내용 기준으로 인코딩 변경). 실제 변환은 다음 저장 시 수행.
+    /// 대상 인코딩으로 표현할 수 없는 문자가 있으면 false를 반환(호출 측에서 경고 가능).
+    @discardableResult
+    func convertSelectedToEncoding(_ newEncoding: TextEncoding) -> Bool {
         guard let id = selectedTabID,
-              let index = tabs.firstIndex(where: { $0.id == id }) else { return }
+              let index = tabs.firstIndex(where: { $0.id == id }) else { return false }
 
-        tabs[index].convertToEncoding(newEncoding)
+        let representable = newEncoding.canEncode(tabs[index].content)
+        tabs[index].encoding = newEncoding
+        tabs[index].isDirty = true
         persistSession()
+        return representable
     }
 
     // MARK: - Session

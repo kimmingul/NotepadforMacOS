@@ -345,6 +345,10 @@ enum NotepadDocumentActions {
         guard let tab = tabManager.selectedTab else { return false }
 
         if tab.fileURL != nil {
+            // 복원 시 원본을 읽지 못한 탭(loadError)을 빈 내용으로 덮어쓰기 전 확인.
+            if tab.loadError, !confirmOverwriteUnreadable(tab) {
+                return false
+            }
             let saved = tabManager.saveCurrentTab()
             if !saved {
                 showSaveFailedAlert(for: tab)
@@ -464,6 +468,18 @@ enum NotepadDocumentActions {
         alert.informativeText = String(localized: "saveFailed.informative")
         alert.addButton(withTitle: String(localized: "OK"))
         alert.runModal()
+    }
+
+    /// 복원 시 원본 파일을 읽지 못해 빈 내용으로 표시된 탭을 저장하려 할 때 확인.
+    /// 사용자가 명시적으로 동의해야만 원본을 덮어쓴다(무음 데이터 손실 방지).
+    private static func confirmOverwriteUnreadable(_ document: Document) -> Bool {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = String(format: String(localized: "overwriteUnreadable.message"), document.displayTitle)
+        alert.informativeText = String(localized: "overwriteUnreadable.informative")
+        alert.addButton(withTitle: String(localized: "Save"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
+        return alert.runModal() == .alertFirstButtonReturn
     }
 
     private enum UnsavedCloseChoice {
