@@ -1,0 +1,430 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		391553242FE620F100579C2C /* MainEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 391553212FE620F100579C2C /* MainEditorView.swift */; };
+		391553252FE620F100579C2C /* NotepadApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3915531D2FE620F100579C2C /* NotepadApp.swift */; };
+		391553262FE620F100579C2C /* GoToLineSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 391553202FE620F100579C2C /* GoToLineSheet.swift */; };
+		391553272FE620F100579C2C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 391553142FE620F100579C2C /* AppDelegate.swift */; };
+		391553282FE620F100579C2C /* FindReplaceSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3915531F2FE620F100579C2C /* FindReplaceSheet.swift */; };
+		391553292FE620F100579C2C /* Document.swift in Sources */ = {isa = PBXBuildFile; fileRef = 391553192FE620F100579C2C /* Document.swift */; };
+		3915532A2FE620F100579C2C /* LineEnding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3915531A2FE620F100579C2C /* LineEnding.swift */; };
+		3915532B2FE620F100579C2C /* TextEncoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3915531B2FE620F100579C2C /* TextEncoding.swift */; };
+		3915532C2FE620F100579C2C /* TabManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 391553172FE620F100579C2C /* TabManager.swift */; };
+		3915532D2FE620F100579C2C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 391553222FE620F100579C2C /* SettingsView.swift */; };
+		3915532E2FE620F100579C2C /* SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 391553162FE620F100579C2C /* SessionStore.swift */; };
+		3915532F2FE620F100579C2C /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3915531E2FE620F100579C2C /* EditorView.swift */; };
+		39CBF9BB2FE79173008F10BA /* Windows_Notepad_icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 39CBF9BA2FE79173008F10BA /* Windows_Notepad_icon.png */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		391553062FE61DCA00579C2C /* Notepad.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Notepad.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		391553142FE620F100579C2C /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		391553162FE620F100579C2C /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
+		391553172FE620F100579C2C /* TabManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabManager.swift; sourceTree = "<group>"; };
+		391553192FE620F100579C2C /* Document.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Document.swift; sourceTree = "<group>"; };
+		3915531A2FE620F100579C2C /* LineEnding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineEnding.swift; sourceTree = "<group>"; };
+		3915531B2FE620F100579C2C /* TextEncoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextEncoding.swift; sourceTree = "<group>"; };
+		3915531D2FE620F100579C2C /* NotepadApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotepadApp.swift; sourceTree = "<group>"; };
+		3915531E2FE620F100579C2C /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
+		3915531F2FE620F100579C2C /* FindReplaceSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindReplaceSheet.swift; sourceTree = "<group>"; };
+		391553202FE620F100579C2C /* GoToLineSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoToLineSheet.swift; sourceTree = "<group>"; };
+		391553212FE620F100579C2C /* MainEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainEditorView.swift; sourceTree = "<group>"; };
+		391553222FE620F100579C2C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		39CBF9BA2FE79173008F10BA /* Windows_Notepad_icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Windows_Notepad_icon.png; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		391553082FE61DCA00579C2C /* NotepadForMacOS */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = NotepadForMacOS;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		391553032FE61DCA00579C2C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		391552FD2FE61DCA00579C2C = {
+			isa = PBXGroup;
+			children = (
+				391553082FE61DCA00579C2C /* NotepadForMacOS */,
+				391553072FE61DCA00579C2C /* Products */,
+				391553152FE620F100579C2C /* Helpers */,
+				391553182FE620F100579C2C /* Managers */,
+				3915531C2FE620F100579C2C /* Models */,
+				3915531D2FE620F100579C2C /* NotepadApp.swift */,
+				391553232FE620F100579C2C /* Views */,
+				39CBF9BA2FE79173008F10BA /* Windows_Notepad_icon.png */,
+			);
+			sourceTree = "<group>";
+		};
+		391553072FE61DCA00579C2C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				391553062FE61DCA00579C2C /* Notepad.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		391553152FE620F100579C2C /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				391553142FE620F100579C2C /* AppDelegate.swift */,
+			);
+			path = Helpers;
+			sourceTree = "<group>";
+		};
+		391553182FE620F100579C2C /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				391553162FE620F100579C2C /* SessionStore.swift */,
+				391553172FE620F100579C2C /* TabManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		3915531C2FE620F100579C2C /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				391553192FE620F100579C2C /* Document.swift */,
+				3915531A2FE620F100579C2C /* LineEnding.swift */,
+				3915531B2FE620F100579C2C /* TextEncoding.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		391553232FE620F100579C2C /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				3915531E2FE620F100579C2C /* EditorView.swift */,
+				3915531F2FE620F100579C2C /* FindReplaceSheet.swift */,
+				391553202FE620F100579C2C /* GoToLineSheet.swift */,
+				391553212FE620F100579C2C /* MainEditorView.swift */,
+				391553222FE620F100579C2C /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		391553052FE61DCA00579C2C /* NotepadForMacOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 391553112FE61DCA00579C2C /* Build configuration list for PBXNativeTarget "NotepadForMacOS" */;
+			buildPhases = (
+				391553022FE61DCA00579C2C /* Sources */,
+				391553032FE61DCA00579C2C /* Frameworks */,
+				391553042FE61DCA00579C2C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				391553082FE61DCA00579C2C /* NotepadForMacOS */,
+			);
+			name = NotepadForMacOS;
+			packageProductDependencies = (
+			);
+			productName = NotepadForMacOS;
+			productReference = 391553062FE61DCA00579C2C /* Notepad.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		391552FE2FE61DCA00579C2C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2650;
+				LastUpgradeCheck = 2650;
+				TargetAttributes = {
+					391553052FE61DCA00579C2C = {
+						CreatedOnToolsVersion = 26.5;
+					};
+				};
+			};
+			buildConfigurationList = 391553012FE61DCA00579C2C /* Build configuration list for PBXProject "NotepadForMacOS" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				ko,
+			);
+			mainGroup = 391552FD2FE61DCA00579C2C;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 391553072FE61DCA00579C2C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				391553052FE61DCA00579C2C /* NotepadForMacOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		391553042FE61DCA00579C2C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				39CBF9BB2FE79173008F10BA /* Windows_Notepad_icon.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		391553022FE61DCA00579C2C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				391553242FE620F100579C2C /* MainEditorView.swift in Sources */,
+				391553252FE620F100579C2C /* NotepadApp.swift in Sources */,
+				391553262FE620F100579C2C /* GoToLineSheet.swift in Sources */,
+				391553272FE620F100579C2C /* AppDelegate.swift in Sources */,
+				391553282FE620F100579C2C /* FindReplaceSheet.swift in Sources */,
+				391553292FE620F100579C2C /* Document.swift in Sources */,
+				3915532A2FE620F100579C2C /* LineEnding.swift in Sources */,
+				3915532B2FE620F100579C2C /* TextEncoding.swift in Sources */,
+				3915532C2FE620F100579C2C /* TabManager.swift in Sources */,
+				3915532D2FE620F100579C2C /* SettingsView.swift in Sources */,
+				3915532E2FE620F100579C2C /* SessionStore.swift in Sources */,
+				3915532F2FE620F100579C2C /* EditorView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		3915530F2FE61DCA00579C2C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		391553102FE61DCA00579C2C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.5;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		391553122FE61DCA00579C2C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = Windows_Notepad_icon.png;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Notepad;
+				INFOPLIST_KEY_CFBundleName = Notepad;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Min-Gul Kim";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jbnu.mgkim.NotepadForMacOS;
+				PRODUCT_NAME = Notepad;
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		391553132FE61DCA00579C2C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = Windows_Notepad_icon.png;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Notepad;
+				INFOPLIST_KEY_CFBundleName = Notepad;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Min-Gul Kim";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jbnu.mgkim.NotepadForMacOS;
+				PRODUCT_NAME = Notepad;
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		391553012FE61DCA00579C2C /* Build configuration list for PBXProject "NotepadForMacOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3915530F2FE61DCA00579C2C /* Debug */,
+				391553102FE61DCA00579C2C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		391553112FE61DCA00579C2C /* Build configuration list for PBXNativeTarget "NotepadForMacOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				391553122FE61DCA00579C2C /* Debug */,
+				391553132FE61DCA00579C2C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 391552FE2FE61DCA00579C2C /* Project object */;
+}

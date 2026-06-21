@@ -1,0 +1,81 @@
+"Notepad" = "메모장";
+"New Tab" = "새 탭";
+"New Window" = "새 창";
+"Open..." = "열기...";
+"Open with Encoding" = "인코딩으로 열기";
+"Save" = "저장";
+"Save As..." = "다른 이름으로 저장...";
+"Select All" = "전체 선택";
+"Find..." = "찾기...";
+"Go to Line..." = "줄로 이동...";
+"Time/Date" = "시간/날짜";
+"Disable Word Wrap" = "자동 줄 바꿈 끄기";
+"Enable Word Wrap" = "자동 줄 바꿈 켜기";
+"Zoom In" = "확대";
+"Zoom Out" = "축소";
+"Reset Zoom" = "확대/축소 재설정";
+"Show Status Bar" = "상태 표시줄 보기";
+"Show Tab Bar" = "탭 막대 보기";
+"Show All Tabs" = "모든 탭 보기";
+"Dark Mode" = "다크 모드";
+"Switch to Light Mode" = "라이트 모드로 전환";
+"Switch to Dark Mode" = "다크 모드로 전환";
+"Close Tab" = "탭 닫기";
+"About Notepad for macOS" = "Notepad for macOS에 관하여";
+"Encoding:" = "인코딩:";
+"Don't Save" = "저장 안 함";
+"Cancel" = "취소";
+"OK" = "확인";
+
+"Untitled" = "제목 없음";
+"Unsaved tab" = "저장되지 않은 탭";
+"No document open" = "열린 문서 없음";
+"status.cursorFormat" = "줄 %1$d, 열 %2$d | %3$d자";
+"Convert to %@" = "%@로 변환";
+"Change line ending for this tab (affects next Save)" = "이 탭의 줄바꿈을 변경합니다(다음 저장 시 적용).";
+
+"Find / Replace" = "찾기 / 바꾸기";
+"Find" = "찾기";
+"Replace with" = "바꿀 내용";
+"Replace" = "바꾸기";
+"Replace All" = "모두 바꾸기";
+"Match case" = "대/소문자 구분";
+"Done" = "완료";
+"Go to Line" = "줄로 이동";
+"Line number" = "줄 번호";
+"Go" = "이동";
+
+"When Notepad starts" = "시작할 때";
+"Continue previous session (restore tabs and unsaved content)" = "이전 세션 계속하기(탭과 저장되지 않은 내용 복원)";
+"Works like Windows 11 Notepad. When off, the app always starts with a new tab." = "Windows 11 Notepad처럼 동작합니다. 끄면 항상 새 탭으로 시작합니다.";
+"Editor" = "편집기";
+"Default font size" = "기본 글꼴 크기";
+"Default font" = "기본 글꼴";
+"System Monospaced" = "시스템 고정폭";
+"fontSize.points" = "%d pt";
+"Word Wrap by default" = "기본 자동 줄 바꿈";
+"Default encoding for new tabs" = "새 탭 기본 인코딩";
+"Session" = "세션";
+"Start New Session (discard current unsaved tabs)" = "새 세션 시작(현재 저장되지 않은 탭 버리기)";
+"Restored tabs and temporary content will be removed." = "복원된 탭과 임시 내용이 모두 삭제됩니다.";
+"Notepad for macOS • Apple Silicon • Plain text only" = "Notepad for macOS • Apple Silicon • 일반 텍스트 전용\n© 김민걸, 전북대";
+"Settings" = "설정";
+
+"encoding.utf8" = "UTF-8";
+"encoding.utf8BOM" = "UTF-8 (BOM)";
+"encoding.eucKR" = "EUC-KR (한국어)";
+"encoding.utf16LE" = "UTF-16 LE";
+"encoding.utf16BE" = "UTF-16 BE";
+
+"lineEnding.lf" = "LF (Unix/macOS)";
+"lineEnding.crlf" = "CRLF (Windows)";
+"lineEnding.cr" = "CR (클래식 Mac)";
+
+"unsavedChanges.message" = "\"%@\"의 변경사항을 저장할까요?";
+"unsavedChanges.informative" = "저장하지 않으면 변경사항이 손실됩니다.";
+"saveFailed.message" = "\"%@\"을(를) 저장할 수 없습니다.";
+"saveFailed.informative" = "파일이 쓰기 가능한지, 선택한 인코딩이 문서 내용을 표현할 수 있는지 확인하세요.";
+
+"License" = "라이선스";
+"View License" = "라이선스 보기...";
+"MIT License" = "MIT 라이선스";

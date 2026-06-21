@@ -1,0 +1,42 @@
+# ---- macOS ----
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+
+# ---- Xcode / Swift ----
+# Build output
+build/
+DerivedData/
+*.xcarchive
+*.app
+*.dmg
+*.dSYM/
+*.dSYM.zip
+
+# User-specific Xcode state
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Packages/
+Package.resolved
+
+# CocoaPods / Carthage (not used, but future-proof)
+Pods/
+Carthage/Build/
+
+# Misc
+*.moved-aside
+*.hmap
+*.ipa
+*.playground
+
+# ---- Tooling / agents ----
+.omc/
+
+# ---- Distribution output ----
+dist/

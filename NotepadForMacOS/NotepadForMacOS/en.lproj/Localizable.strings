@@ -1,0 +1,81 @@
+"Notepad" = "Notepad";
+"New Tab" = "New Tab";
+"New Window" = "New Window";
+"Open..." = "Open...";
+"Open with Encoding" = "Open with Encoding";
+"Save" = "Save";
+"Save As..." = "Save As...";
+"Select All" = "Select All";
+"Find..." = "Find...";
+"Go to Line..." = "Go to Line...";
+"Time/Date" = "Time/Date";
+"Disable Word Wrap" = "Disable Word Wrap";
+"Enable Word Wrap" = "Enable Word Wrap";
+"Zoom In" = "Zoom In";
+"Zoom Out" = "Zoom Out";
+"Reset Zoom" = "Reset Zoom";
+"Show Status Bar" = "Show Status Bar";
+"Show Tab Bar" = "Show Tab Bar";
+"Show All Tabs" = "Show All Tabs";
+"Dark Mode" = "Dark Mode";
+"Switch to Light Mode" = "Switch to Light Mode";
+"Switch to Dark Mode" = "Switch to Dark Mode";
+"Close Tab" = "Close Tab";
+"About Notepad for macOS" = "About Notepad for macOS";
+"Encoding:" = "Encoding:";
+"Don't Save" = "Don't Save";
+"Cancel" = "Cancel";
+"OK" = "OK";
+
+"Untitled" = "Untitled";
+"Unsaved tab" = "Unsaved tab";
+"No document open" = "No document open";
+"status.cursorFormat" = "Ln %1$d, Col %2$d | %3$d chars";
+"Convert to %@" = "Convert to %@";
+"Change line ending for this tab (affects next Save)" = "Change line ending for this tab (affects next Save)";
+
+"Find / Replace" = "Find / Replace";
+"Find" = "Find";
+"Replace with" = "Replace with";
+"Replace" = "Replace";
+"Replace All" = "Replace All";
+"Match case" = "Match case";
+"Done" = "Done";
+"Go to Line" = "Go to Line";
+"Line number" = "Line number";
+"Go" = "Go";
+
+"When Notepad starts" = "When Notepad starts";
+"Continue previous session (restore tabs and unsaved content)" = "Continue previous session (restore tabs and unsaved content)";
+"Works like Windows 11 Notepad. When off, the app always starts with a new tab." = "Works like Windows 11 Notepad. When off, the app always starts with a new tab.";
+"Editor" = "Editor";
+"Default font size" = "Default font size";
+"Default font" = "Default font";
+"System Monospaced" = "System Monospaced";
+"fontSize.points" = "%d pt";
+"Word Wrap by default" = "Word Wrap by default";
+"Default encoding for new tabs" = "Default encoding for new tabs";
+"Session" = "Session";
+"Start New Session (discard current unsaved tabs)" = "Start New Session (discard current unsaved tabs)";
+"Restored tabs and temporary content will be removed." = "Restored tabs and temporary content will be removed.";
+"Notepad for macOS • Apple Silicon • Plain text only" = "Notepad for macOS • Apple Silicon • Plain text only\n© Min-Gul Kim, JBNU";
+"Settings" = "Settings";
+
+"encoding.utf8" = "UTF-8";
+"encoding.utf8BOM" = "UTF-8 (BOM)";
+"encoding.eucKR" = "EUC-KR (Korean)";
+"encoding.utf16LE" = "UTF-16 LE";
+"encoding.utf16BE" = "UTF-16 BE";
+
+"lineEnding.lf" = "LF (Unix/macOS)";
+"lineEnding.crlf" = "CRLF (Windows)";
+"lineEnding.cr" = "CR (Classic Mac)";
+
+"unsavedChanges.message" = "Do you want to save changes to \"%@\"?";
+"unsavedChanges.informative" = "If you don't save, your changes will be lost.";
+"saveFailed.message" = "Could not save \"%@\".";
+"saveFailed.informative" = "Check that the file is writable and that the selected encoding can represent the document contents.";
+
+"License" = "License";
+"View License" = "View License...";
+"MIT License" = "MIT License";
