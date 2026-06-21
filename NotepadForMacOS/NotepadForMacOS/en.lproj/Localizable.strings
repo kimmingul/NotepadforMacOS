@@ -78,6 +78,15 @@
 "overwriteUnreadable.message" = "Overwrite \"%@\" with empty contents?";
 "overwriteUnreadable.informative" = "The original file could not be read when this tab was restored, so it appears empty. Saving now will replace the file's contents on disk.";
 
+"status.selection" = "%d selected";
+"Find Next" = "Find Next";
+"Find Previous" = "Find Previous";
+"Show Next Tab" = "Show Next Tab";
+"Show Previous Tab" = "Show Previous Tab";
+"Print..." = "Print...";
+"convertLossy.message" = "Some characters can't be represented in %@.";
+"convertLossy.informative" = "The encoding was changed for this tab, but characters the target encoding can't represent will be lost or substituted when you save. Keep UTF-8 to preserve them.";
+
 "License" = "License";
 "View License" = "View License...";
 "MIT License" = "MIT License";

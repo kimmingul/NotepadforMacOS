@@ -71,6 +71,16 @@ struct NotepadCommands: Commands {
             }
             .keyboardShortcut("s", modifiers: [.command, .shift])
             .disabled(tabManager?.selectedTab == nil)
+
+            Divider()
+
+            Button {
+                tabManager?.requestPrint()
+            } label: {
+                Label(String(localized: "Print..."), systemImage: "printer")
+            }
+            .keyboardShortcut("p", modifiers: .command)
+            .disabled(tabManager?.selectedTab == nil)
         }
 
         CommandGroup(after: .pasteboard) {
@@ -92,13 +102,31 @@ struct NotepadCommands: Commands {
             .keyboardShortcut("f", modifiers: .command)
             .disabled(tabManager == nil)
 
+            // macOS 관례: Cmd+G = 다음 찾기, Cmd+Shift+G = 이전 찾기
+            Button {
+                tabManager?.repeatLastFind(forward: true)
+            } label: {
+                Label(String(localized: "Find Next"), systemImage: "chevron.down")
+            }
+            .keyboardShortcut("g", modifiers: .command)
+            .disabled(tabManager == nil)
+
+            Button {
+                tabManager?.repeatLastFind(forward: false)
+            } label: {
+                Label(String(localized: "Find Previous"), systemImage: "chevron.up")
+            }
+            .keyboardShortcut("g", modifiers: [.command, .shift])
+            .disabled(tabManager == nil)
+
+            // Windows의 Ctrl+G(줄 이동)는 macOS Cmd+G(다음 찾기)와 충돌 → Cmd+L로 매핑
             Button {
                 guard let tabManager else { return }
                 NotificationCenter.default.post(name: .showGoToLine, object: tabManager)
             } label: {
                 Label(String(localized: "Go to Line..."), systemImage: "arrow.right.to.line")
             }
-            .keyboardShortcut("g", modifiers: .command)
+            .keyboardShortcut("l", modifiers: .command)
             .disabled(tabManager == nil)
 
             Button {
@@ -173,6 +201,24 @@ struct NotepadCommands: Commands {
         }
 
         CommandGroup(after: .windowList) {
+            Button {
+                tabManager?.selectNextTab()
+            } label: {
+                Label(String(localized: "Show Next Tab"), systemImage: "arrow.right")
+            }
+            .keyboardShortcut(.tab, modifiers: .control)
+            .disabled((tabManager?.tabs.count ?? 0) < 2)
+
+            Button {
+                tabManager?.selectPreviousTab()
+            } label: {
+                Label(String(localized: "Show Previous Tab"), systemImage: "arrow.left")
+            }
+            .keyboardShortcut(.tab, modifiers: [.control, .shift])
+            .disabled((tabManager?.tabs.count ?? 0) < 2)
+
+            Divider()
+
             Button {
                 guard let tabManager else { return }
                 NotepadDocumentActions.closeSelectedTab(in: tabManager)

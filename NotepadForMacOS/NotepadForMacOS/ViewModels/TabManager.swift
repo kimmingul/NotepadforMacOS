@@ -10,9 +10,13 @@ struct EditorCommand: Equatable {
 }
 
 enum EditorCommandAction: Equatable {
-    case find(search: String, matchCase: Bool)
-    case replace(search: String, replacement: String, matchCase: Bool)
+    case find(search: String, matchCase: Bool, forward: Bool)
+    case replaceCurrent(search: String, replacement: String, matchCase: Bool)
+    case replaceAll(search: String, replacement: String, matchCase: Bool)
+    case insertText(String)        // 커서 위치에 삽입 (Time/Date 등), 실행취소 가능
+    case setText(String)           // 전체 교체 (인코딩 다시 열기 등)
     case goToLine(Int)
+    case printDocument
 }
 
 /// 탭 전체를 관리. Windows 11 Notepad의 탭 동작을 모방
@@ -21,7 +25,12 @@ final class TabManager: ObservableObject {
     @Published var selectedTabID: UUID?
     @Published var cursorLine: Int = 1
     @Published var cursorCol: Int = 1
+    @Published var selectionLength: Int = 0
     @Published var pendingEditorCommand: EditorCommand?
+
+    /// 마지막 검색어/옵션 (다음 찾기·이전 찾기 반복용)
+    private var lastSearch: String = ""
+    private var lastMatchCase: Bool = false
 
     private var cancellables = Set<AnyCancellable>()
     private let sessionStore = SessionStore.shared
@@ -97,6 +106,20 @@ final class TabManager: ObservableObject {
     func selectTab(_ id: UUID) {
         selectedTabID = id
         persistSession()
+    }
+
+    /// 다음 탭으로 순환 (Ctrl+Tab)
+    func selectNextTab() {
+        guard tabs.count > 1, let id = selectedTabID,
+              let idx = tabs.firstIndex(where: { $0.id == id }) else { return }
+        selectTab(tabs[(idx + 1) % tabs.count].id)
+    }
+
+    /// 이전 탭으로 순환 (Ctrl+Shift+Tab)
+    func selectPreviousTab() {
+        guard tabs.count > 1, let id = selectedTabID,
+              let idx = tabs.firstIndex(where: { $0.id == id }) else { return }
+        selectTab(tabs[(idx - 1 + tabs.count) % tabs.count].id)
     }
 
     func newTab(content: String = "", fileURL: URL? = nil) {
@@ -251,6 +274,8 @@ final class TabManager: ObservableObject {
 
         if success {
             tabs[index] = doc
+            // 다시 읽은 내용을 에디터에 반영 (전체 교체)
+            pendingEditorCommand = EditorCommand(documentID: id, action: .setText(doc.content))
         } else {
             // 파일이 없거나 실패 → 단순히 플래그 변경
             tabs[index].encoding = newEncoding
@@ -316,54 +341,68 @@ final class TabManager: ObservableObject {
 
     // MARK: - Time/Date (F5)
 
+    /// 현재 시간을 Windows Notepad 형식으로 커서 위치에 삽입(실행취소 가능, 에디터에서 처리).
     func insertTimeDate() {
-        guard let id = selectedTabID,
-              let index = tabs.firstIndex(where: { $0.id == id }) else { return }
-
+        guard let id = selectedTabID else { return }
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a M/d/yyyy"   // Windows Notepad 스타일
         let timeString = formatter.string(from: Date())
-
-        let current = tabs[index].content
-        let newContent = current + (current.isEmpty || current.hasSuffix("\n") ? "" : "\n") + timeString + "\n"
-
-        tabs[index].content = newContent
-        tabs[index].isDirty = true
+        pendingEditorCommand = EditorCommand(documentID: id, action: .insertText(timeString))
     }
 
-    func updateCursor(line: Int, col: Int) {
+    func updateCursor(line: Int, col: Int, selectionLength: Int = 0) {
         cursorLine = line
         cursorCol = col
+        self.selectionLength = selectionLength
     }
 
     // MARK: - Editor Commands
 
-    func findInSelectedTab(search: String, matchCase: Bool) {
+    func findInSelectedTab(search: String, matchCase: Bool, forward: Bool = true) {
         guard let id = selectedTabID, !search.isEmpty else { return }
+        lastSearch = search
+        lastMatchCase = matchCase
         pendingEditorCommand = EditorCommand(
             documentID: id,
-            action: .find(search: search, matchCase: matchCase)
+            action: .find(search: search, matchCase: matchCase, forward: forward)
         )
+    }
+
+    /// 다음/이전 찾기 (Cmd+G / Cmd+Shift+G). 마지막 검색어를 반복.
+    func repeatLastFind(forward: Bool) {
+        guard !lastSearch.isEmpty else { return }
+        findInSelectedTab(search: lastSearch, matchCase: lastMatchCase, forward: forward)
     }
 
     func replaceInSelectedTab(search: String, replacement: String, matchCase: Bool) {
         guard let id = selectedTabID, !search.isEmpty else { return }
+        lastSearch = search
+        lastMatchCase = matchCase
         pendingEditorCommand = EditorCommand(
             documentID: id,
-            action: .replace(search: search, replacement: replacement, matchCase: matchCase)
+            action: .replaceCurrent(search: search, replacement: replacement, matchCase: matchCase)
         )
     }
 
+    /// Replace All — 에디터의 textStorage를 통해 한 번에 처리(실행취소 가능).
     func replaceAllInSelectedTab(search: String, replacement: String, matchCase: Bool) {
         guard let id = selectedTabID, !search.isEmpty else { return }
-        let options: String.CompareOptions = matchCase ? [] : .caseInsensitive
-        guard let current = selectedTab?.content else { return }
-        let newContent = current.replacingOccurrences(of: search, with: replacement, options: options)
-        updateContent(for: id, newContent: newContent)
+        lastSearch = search
+        lastMatchCase = matchCase
+        pendingEditorCommand = EditorCommand(
+            documentID: id,
+            action: .replaceAll(search: search, replacement: replacement, matchCase: matchCase)
+        )
     }
 
     func goToLineInSelectedTab(_ line: Int) {
         guard let id = selectedTabID, line > 0 else { return }
         pendingEditorCommand = EditorCommand(documentID: id, action: .goToLine(line))
+    }
+
+    /// 현재 탭 인쇄 요청 (에디터에서 NSPrintOperation 실행).
+    func requestPrint() {
+        guard let id = selectedTabID else { return }
+        pendingEditorCommand = EditorCommand(documentID: id, action: .printDocument)
     }
 }

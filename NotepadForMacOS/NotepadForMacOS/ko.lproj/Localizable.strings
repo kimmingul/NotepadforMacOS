@@ -78,6 +78,15 @@
 "overwriteUnreadable.message" = "\"%@\"을(를) 빈 내용으로 덮어쓸까요?";
 "overwriteUnreadable.informative" = "이 탭을 복원할 때 원본 파일을 읽지 못해 비어 있는 상태입니다. 지금 저장하면 디스크의 원본 내용이 대체됩니다.";
 
+"status.selection" = "%d자 선택됨";
+"Find Next" = "다음 찾기";
+"Find Previous" = "이전 찾기";
+"Show Next Tab" = "다음 탭";
+"Show Previous Tab" = "이전 탭";
+"Print..." = "인쇄...";
+"convertLossy.message" = "%@(으)로 표현할 수 없는 문자가 있습니다.";
+"convertLossy.informative" = "이 탭의 인코딩을 변경했지만, 대상 인코딩이 표현할 수 없는 문자는 저장 시 손실되거나 대체됩니다. 그대로 유지하려면 UTF-8을 사용하세요.";
+
 "License" = "라이선스";
 "View License" = "라이선스 보기...";
 "MIT License" = "MIT 라이선스";

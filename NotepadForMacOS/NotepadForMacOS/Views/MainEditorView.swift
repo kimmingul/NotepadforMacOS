@@ -26,14 +26,14 @@ struct MainEditorView: View {
 
             // Editor
             if let selectedTab = tabManager.selectedTab {
-                EditorView(document: selectedTab)
+                EditorTextView(documentID: selectedTab.id)
                     .environmentObject(tabManager)
-                    .id(selectedTab.id) // 탭 전환 시 뷰 리프레시
+                    .id(selectedTab.id) // 탭 전환 시 새 NSTextView 인스턴스
             } else {
                 VStack {
                     Text("No document open")
                         .foregroundStyle(.secondary)
-                    Button("New Tab") {
+                    Button(String(localized: "New Tab")) {
                         tabManager.newTab()
                     }
                 }
@@ -203,10 +203,16 @@ struct StatusBarView: View {
 
     var body: some View {
         HStack {
-            // Real-time from NSTextView selection (G006)
+            // 실시간 커서 위치 / 글자 수 (NSTextView 선택에서 갱신)
             Text(String(format: String(localized: "status.cursorFormat"), tabManager.cursorLine, tabManager.cursorCol, document.content.count))
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
+
+            if tabManager.selectionLength > 0 {
+                Text(String(format: String(localized: "status.selection"), tabManager.selectionLength))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
 
             Spacer()
 
@@ -242,7 +248,9 @@ struct StatusBarView: View {
 
                     ForEach(TextEncoding.allCases) { enc in
                         Button(String(format: String(localized: "Convert to %@"), enc.displayName)) {
-                            tabManager.convertSelectedToEncoding(enc)
+                            if !tabManager.convertSelectedToEncoding(enc) {
+                                Self.warnLossyConversion(to: enc)
+                            }
                         }
                     }
                 } label: {
@@ -256,5 +264,15 @@ struct StatusBarView: View {
         .padding(.vertical, 3)
         .background(Color(NSColor.windowBackgroundColor))
         .overlay(Divider(), alignment: .top)
+    }
+
+    /// 현재 내용에 대상 인코딩으로 표현할 수 없는 문자가 있을 때 경고.
+    private static func warnLossyConversion(to encoding: TextEncoding) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = String(format: String(localized: "convertLossy.message"), encoding.displayName)
+        alert.informativeText = String(localized: "convertLossy.informative")
+        alert.addButton(withTitle: String(localized: "OK"))
+        alert.runModal()
     }
 }

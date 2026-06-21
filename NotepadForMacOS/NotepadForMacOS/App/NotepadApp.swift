@@ -62,8 +62,6 @@ struct NotepadWindowView: View {
 extension Notification.Name {
     static let showFind = Notification.Name("showFind")
     static let showGoToLine = Notification.Name("showGoToLine")
-    static let findNext = Notification.Name("findNext")
-    static let findPrevious = Notification.Name("findPrevious")
     static let startNewSessionRequested = Notification.Name("startNewSessionRequested")
 }
 
