@@ -30,9 +30,13 @@ struct SettingsView: View {
                     HStack {
                         Text("Default font size")
                         Spacer()
+                        Text(String(format: String(localized: "fontSize.points"), Int(fontSize)))
+                            .monospacedDigit()
+                            .frame(minWidth: 50, alignment: .trailing)
                         Stepper(value: $fontSize, in: 8...48, step: 1) {
-                            Text(String(format: String(localized: "fontSize.points"), Int(fontSize)))
+                            EmptyView()
                         }
+                        .labelsHidden()
                     }
 
                     HStack {
