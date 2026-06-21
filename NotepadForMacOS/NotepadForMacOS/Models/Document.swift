@@ -6,7 +6,7 @@ import SwiftUI
 ///
 /// 영속화는 `SessionStore`가 담당한다(파일 경로 대신 보안 스코프 북마크를 저장하므로
 /// 이 타입은 `Codable`을 직접 채택하지 않는다).
-struct Document: Identifiable, Equatable {
+struct Document: Identifiable, Equatable, Sendable {
     var id = UUID()
     var fileURL: URL?
 

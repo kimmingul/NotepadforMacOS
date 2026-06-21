@@ -1,7 +1,7 @@
 import Foundation
 
 /// Windows 11 Notepad 스타일 + 한국어 지원 인코딩
-enum TextEncoding: String, CaseIterable, Codable, Identifiable {
+enum TextEncoding: String, CaseIterable, Codable, Identifiable, Sendable {
     case utf8 = "UTF-8"
     case utf8BOM = "UTF-8 with BOM"
     case eucKR = "EUC-KR"

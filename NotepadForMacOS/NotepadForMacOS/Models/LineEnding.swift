@@ -1,6 +1,6 @@
 import Foundation
 
-enum LineEnding: String, CaseIterable, Codable, Identifiable {
+enum LineEnding: String, CaseIterable, Codable, Identifiable, Sendable {
     case lf = "LF"
     case crlf = "CRLF"
     case cr = "CR"

@@ -37,11 +37,10 @@ final class TabManager: ObservableObject {
         // 시작 시 세션 복원
         restoreFromSession()
 
-        // 내용 변경 시 dirty + 세션 저장 스케줄
+        // 내용 변경 시 세션 저장 스케줄 (dirty 처리는 updateContent에서 담당)
         $tabs
             .debounce(for: .milliseconds(200), scheduler: RunLoop.main)
             .sink { [weak self] _ in
-                self?.markDirtyForSelectedIfNeeded()
                 self?.persistSession()
             }
             .store(in: &cancellables)
@@ -120,11 +119,6 @@ final class TabManager: ObservableObject {
         guard let index = tabs.firstIndex(where: { $0.id == id }) else { return }
 
         let wasSelected = selectedTabID == id
-        _ = tabs[index]
-
-        // 세션 내용 파일 정리 (필요하면)
-        // 실제로는 SessionStore에서 save 시 처리
-
         tabs.remove(at: index)
 
         if wasSelected {
@@ -140,11 +134,6 @@ final class TabManager: ObservableObject {
         persistSession()
     }
 
-    func closeAllTabs() {
-        tabs.removeAll()
-        newTab()
-    }
-
     // MARK: - Content & State
 
     func updateContent(for id: UUID, newContent: String) {
@@ -155,17 +144,6 @@ final class TabManager: ObservableObject {
                 tabs[index].isDirty = true
             }
         }
-    }
-
-    func markDirty(for id: UUID) {
-        if let index = tabs.firstIndex(where: { $0.id == id }) {
-            tabs[index].isDirty = true
-        }
-    }
-
-    private func markDirtyForSelectedIfNeeded() {
-        // EditorView의 textDidChange + updateContent 에서 dirty 처리를 담당.
-        // 여기서는 필요시 추가 로직 (현재는 no-op).
     }
 
     // MARK: - File Operations
@@ -258,13 +236,6 @@ final class TabManager: ObservableObject {
         }
         persistSession()
         return true
-    }
-
-    func saveAs(url: URL, encoding: TextEncoding? = nil, lineEnding: LineEnding? = nil) -> Bool {
-        guard let id = selectedTabID,
-              tabs.firstIndex(where: { $0.id == id }) != nil else { return false }
-
-        return saveTab(id, to: url, encoding: encoding, lineEnding: lineEnding)
     }
 
     // MARK: - Encoding features (요청 핵심 기능)

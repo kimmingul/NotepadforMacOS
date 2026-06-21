@@ -289,7 +289,7 @@ private struct TabSnapshot: Sendable {
     let content: String
     let writeContent: Bool
 
-    init(_ doc: Document) {
+    nonisolated init(_ doc: Document) {
         id = doc.id
         filePath = doc.fileURL?.path
         bookmark = doc.securityScopedBookmark
