@@ -77,7 +77,7 @@ fix_app_icon() {
   # Fall back to the Windows reference icon.
   local master_icon="NotepadForMacOS/NotepadForMacOS/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png"
   if [[ ! -f "$master_icon" ]]; then
-    master_icon="NotepadForMacOS/Windows_Notepad_icon.png"
+    master_icon="Design/Windows_Notepad_icon.png"
   fi
   if [[ ! -f "$master_icon" ]]; then
     warn "No suitable master icon found — skipping icon fix"
