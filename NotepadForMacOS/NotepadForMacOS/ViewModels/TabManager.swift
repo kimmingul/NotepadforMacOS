@@ -328,10 +328,21 @@ final class TabManager: ObservableObject {
         sessionStore.saveSession(tabs: tabs, selectedID: selectedTabID, sessionID: sessionID)
     }
 
-    /// 사용자가 창을 명시적으로 닫았을 때(앱 종료가 아닌 경우) 이 창의 세션을 정리한다.
-    /// 종료 시에는 복원을 위해 보존하고, 단순 창 닫힘에서는 디렉터리가 쌓이지 않도록 삭제.
+    /// 사용자가 창을 명시적으로 닫았을 때(앱 종료가 아닌 경우) 호출.
+    /// - 기본 창은 항상 보존(다음 실행 시 복원).
+    /// - 보조 창은 미저장 내용이 있으면 보존(Windows 11처럼), 없으면 디렉터리를 정리해 누적을 막는다.
+    ///   (창 닫기는 탭 닫기 확인을 거치지 않으므로 미저장 내용을 임의로 버리지 않는다.)
     func discardWindowSession() {
-        sessionStore.clearSession(sessionID: sessionID)
+        guard sessionID != nil else {
+            forcePersist()   // 기본('primary') 세션은 절대 버리지 않음
+            return
+        }
+        let hasUnsaved = tabs.contains { $0.isDirty || ($0.fileURL == nil && !$0.content.isEmpty) }
+        if hasUnsaved {
+            forcePersist()
+        } else {
+            sessionStore.clearSession(sessionID: sessionID)
+        }
     }
 
     func startNewSession() {
