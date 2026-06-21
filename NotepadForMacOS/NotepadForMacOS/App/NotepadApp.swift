@@ -47,7 +47,12 @@ struct NotepadWindowView: View {
             .preferredColorScheme(isDarkMode ? .dark : .light)
             .navigationTitle(windowTitle)
             .onDisappear {
-                tabManager.forcePersist()
+                NotepadTextInput.commitActiveComposition()
+                if AppDelegate.isTerminating {
+                    tabManager.forcePersist()          // 앱 종료 → 복원을 위해 보존
+                } else {
+                    tabManager.discardWindowSession()  // 창만 닫음 → 세션 디렉터리 정리
+                }
             }
     }
 

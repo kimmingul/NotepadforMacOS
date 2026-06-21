@@ -82,9 +82,14 @@
 "status.selection" = "%d자 선택됨";
 "Find Next" = "다음 찾기";
 "Find Previous" = "이전 찾기";
+"Wrap around" = "둘러 찾기";
+"Toggle Replace" = "바꾸기 표시 전환";
+"No results" = "결과 없음";
+"%d matches" = "%d개 일치";
 "Show Next Tab" = "다음 탭";
 "Show Previous Tab" = "이전 탭";
 "Print..." = "인쇄...";
+"Page Setup..." = "페이지 설정...";
 "convertLossy.message" = "%@(으)로 표현할 수 없는 문자가 있습니다.";
 "convertLossy.informative" = "이 탭의 인코딩을 변경했지만, 대상 인코딩이 표현할 수 없는 문자는 저장 시 손실되거나 대체됩니다. 그대로 유지하려면 UTF-8을 사용하세요.";
 

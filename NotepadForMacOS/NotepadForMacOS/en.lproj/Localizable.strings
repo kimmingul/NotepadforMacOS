@@ -82,9 +82,14 @@
 "status.selection" = "%d selected";
 "Find Next" = "Find Next";
 "Find Previous" = "Find Previous";
+"Wrap around" = "Wrap around";
+"Toggle Replace" = "Toggle Replace";
+"No results" = "No results";
+"%d matches" = "%d matches";
 "Show Next Tab" = "Show Next Tab";
 "Show Previous Tab" = "Show Previous Tab";
 "Print..." = "Print...";
+"Page Setup..." = "Page Setup...";
 "convertLossy.message" = "Some characters can't be represented in %@.";
 "convertLossy.informative" = "The encoding was changed for this tab, but characters the target encoding can't represent will be lost or substituted when you save. Keep UTF-8 to preserve them.";
 

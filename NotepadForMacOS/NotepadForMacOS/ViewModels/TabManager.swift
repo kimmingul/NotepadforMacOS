@@ -10,7 +10,7 @@ struct EditorCommand: Equatable {
 }
 
 enum EditorCommandAction: Equatable {
-    case find(search: String, matchCase: Bool, forward: Bool)
+    case find(search: String, matchCase: Bool, forward: Bool, wrap: Bool)
     case replaceCurrent(search: String, replacement: String, matchCase: Bool)
     case replaceAll(search: String, replacement: String, matchCase: Bool)
     case insertText(String)        // 커서 위치에 삽입 (Time/Date 등), 실행취소 가능
@@ -31,6 +31,7 @@ final class TabManager: ObservableObject {
     /// 마지막 검색어/옵션 (다음 찾기·이전 찾기 반복용)
     private var lastSearch: String = ""
     private var lastMatchCase: Bool = false
+    private var lastWrap: Bool = true
 
     private var cancellables = Set<AnyCancellable>()
     private let sessionStore = SessionStore.shared
@@ -64,6 +65,7 @@ final class TabManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
+            NotepadTextInput.commitActiveComposition()
             self?.forcePersist()
         }
 
@@ -126,6 +128,15 @@ final class TabManager: ObservableObject {
         guard tabs.count > 1, let id = selectedTabID,
               let idx = tabs.firstIndex(where: { $0.id == id }) else { return }
         selectTab(tabs[(idx - 1 + tabs.count) % tabs.count].id)
+    }
+
+    /// 드래그로 탭 재정렬: `id` 탭을 `targetID` 탭 위치로 이동.
+    func moveTab(_ id: UUID, before targetID: UUID) {
+        guard id != targetID, let from = tabs.firstIndex(where: { $0.id == id }) else { return }
+        let moved = tabs.remove(at: from)
+        let insertIndex = tabs.firstIndex(where: { $0.id == targetID }) ?? min(from, tabs.count)
+        tabs.insert(moved, at: insertIndex)
+        persistSession()
     }
 
     func newTab(content: String = "", fileURL: URL? = nil) {
@@ -317,6 +328,12 @@ final class TabManager: ObservableObject {
         sessionStore.saveSession(tabs: tabs, selectedID: selectedTabID, sessionID: sessionID)
     }
 
+    /// 사용자가 창을 명시적으로 닫았을 때(앱 종료가 아닌 경우) 이 창의 세션을 정리한다.
+    /// 종료 시에는 복원을 위해 보존하고, 단순 창 닫힘에서는 디렉터리가 쌓이지 않도록 삭제.
+    func discardWindowSession() {
+        sessionStore.clearSession(sessionID: sessionID)
+    }
+
     func startNewSession() {
         sessionStore.clearSession(sessionID: sessionID)
         resetToFreshTab()
@@ -366,20 +383,21 @@ final class TabManager: ObservableObject {
 
     // MARK: - Editor Commands
 
-    func findInSelectedTab(search: String, matchCase: Bool, forward: Bool = true) {
+    func findInSelectedTab(search: String, matchCase: Bool, forward: Bool = true, wrap: Bool = true) {
         guard let id = selectedTabID, !search.isEmpty else { return }
         lastSearch = search
         lastMatchCase = matchCase
+        lastWrap = wrap
         pendingEditorCommand = EditorCommand(
             documentID: id,
-            action: .find(search: search, matchCase: matchCase, forward: forward)
+            action: .find(search: search, matchCase: matchCase, forward: forward, wrap: wrap)
         )
     }
 
     /// 다음/이전 찾기 (Cmd+G / Cmd+Shift+G). 마지막 검색어를 반복.
     func repeatLastFind(forward: Bool) {
         guard !lastSearch.isEmpty else { return }
-        findInSelectedTab(search: lastSearch, matchCase: lastMatchCase, forward: forward)
+        findInSelectedTab(search: lastSearch, matchCase: lastMatchCase, forward: forward, wrap: lastWrap)
     }
 
     func replaceInSelectedTab(search: String, replacement: String, matchCase: Bool) {

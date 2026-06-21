@@ -114,8 +114,8 @@ struct EditorTextView: NSViewRepresentable {
             lastHandledCommandID = command.id
 
             switch command.action {
-            case let .find(search, matchCase, forward):
-                find(search: search, matchCase: matchCase, forward: forward, in: textView)
+            case let .find(search, matchCase, forward, wrap):
+                find(search: search, matchCase: matchCase, forward: forward, wrap: wrap, in: textView)
             case let .replaceCurrent(search, replacement, matchCase):
                 replaceCurrent(search: search, with: replacement, matchCase: matchCase, in: textView)
             case let .replaceAll(search, replacement, matchCase):
@@ -143,8 +143,8 @@ struct EditorTextView: NSViewRepresentable {
 
         // MARK: Find / Replace
 
-        private func find(search: String, matchCase: Bool, forward: Bool, in textView: NSTextView) {
-            guard let range = findRange(search: search, matchCase: matchCase, forward: forward, in: textView) else {
+        private func find(search: String, matchCase: Bool, forward: Bool, wrap: Bool, in textView: NSTextView) {
+            guard let range = findRange(search: search, matchCase: matchCase, forward: forward, wrap: wrap, in: textView) else {
                 NSSound.beep()
                 return
             }
@@ -198,6 +198,7 @@ struct EditorTextView: NSViewRepresentable {
             search: String,
             matchCase: Bool,
             forward: Bool,
+            wrap: Bool = true,
             in textView: NSTextView,
             startOverride: Int? = nil
         ) -> NSRange? {
@@ -213,7 +214,7 @@ struct EditorTextView: NSViewRepresentable {
                 let forwardRange = NSRange(location: start, length: nsText.length - start)
                 let found = nsText.range(of: search, options: options, range: forwardRange)
                 if found.location != NSNotFound { return found }
-                // wrap to top
+                guard wrap else { return nil }
                 let wrapped = nsText.range(of: search, options: options, range: NSRange(location: 0, length: start))
                 return wrapped.location == NSNotFound ? nil : wrapped
             } else {
@@ -222,7 +223,7 @@ struct EditorTextView: NSViewRepresentable {
                 let backRange = NSRange(location: 0, length: end)
                 let found = nsText.range(of: search, options: options, range: backRange)
                 if found.location != NSNotFound { return found }
-                // wrap to bottom
+                guard wrap else { return nil }
                 let wrapped = nsText.range(of: search, options: options, range: NSRange(location: end, length: nsText.length - end))
                 return wrapped.location == NSNotFound ? nil : wrapped
             }

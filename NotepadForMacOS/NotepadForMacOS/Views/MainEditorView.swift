@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 
 struct MainEditorView: View {
     @EnvironmentObject var tabManager: TabManager
@@ -9,10 +10,13 @@ struct MainEditorView: View {
     @AppStorage("wordWrap") private var wordWrap: Bool = false
     @AppStorage("fontSize") private var fontSize: Double = 14.0
 
-    @State private var showFindSheet = false
     @State private var showGoToLineSheet = false
+    @State private var showFindBar = false
+    @State private var showReplace = false
     @State private var findText = ""
     @State private var replaceText = ""
+    @State private var matchCase = false
+    @State private var wrapAround = true
 
     var body: some View {
         VStack(spacing: 0) {
@@ -22,6 +26,23 @@ struct MainEditorView: View {
                     .environmentObject(tabManager)
 
                 Divider()
+            }
+
+            // Inline Find/Replace bar (non-modal, Windows 11 style)
+            if showFindBar {
+                FindBarView(
+                    findText: $findText,
+                    replaceText: $replaceText,
+                    matchCase: $matchCase,
+                    wrapAround: $wrapAround,
+                    showReplace: $showReplace,
+                    matchCount: matchCount,
+                    onFindNext: { tabManager.findInSelectedTab(search: findText, matchCase: matchCase, forward: true, wrap: wrapAround) },
+                    onFindPrevious: { tabManager.findInSelectedTab(search: findText, matchCase: matchCase, forward: false, wrap: wrapAround) },
+                    onReplace: { tabManager.replaceInSelectedTab(search: findText, replacement: replaceText, matchCase: matchCase) },
+                    onReplaceAll: { tabManager.replaceAllInSelectedTab(search: findText, replacement: replaceText, matchCase: matchCase) },
+                    onClose: { showFindBar = false }
+                )
             }
 
             // Editor
@@ -48,7 +69,7 @@ struct MainEditorView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .showFind)) { notification in
             if notification.object as? TabManager === tabManager {
-                showFindSheet = true
+                showFindBar = true
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .showGoToLine)) { notification in
@@ -56,26 +77,30 @@ struct MainEditorView: View {
                 showGoToLineSheet = true
             }
         }
-        .sheet(isPresented: $showFindSheet) {
-            FindReplaceSheet(
-                findText: $findText,
-                replaceText: $replaceText,
-                onFind: { search, matchCase in
-                    tabManager.findInSelectedTab(search: search, matchCase: matchCase)
-                },
-                onReplace: { search, replacement, matchCase in
-                    tabManager.replaceInSelectedTab(search: search, replacement: replacement, matchCase: matchCase)
-                },
-                onReplaceAll: { search, replacement, matchCase in
-                    tabManager.replaceAllInSelectedTab(search: search, replacement: replacement, matchCase: matchCase)
-                }
-            )
-        }
         .sheet(isPresented: $showGoToLineSheet) {
             GoToLineSheet { line in
                 tabManager.goToLineInSelectedTab(line)
             }
         }
+    }
+
+    /// 현재 탭 내용에서 찾기 막대의 검색어와 일치하는 개수 (대/소문자 옵션 반영).
+    private var matchCount: Int {
+        guard showFindBar, !findText.isEmpty, let content = tabManager.selectedTab?.content else { return 0 }
+        let nsText = content as NSString
+        guard nsText.length > 0 else { return 0 }
+        let options: NSString.CompareOptions = matchCase ? [] : .caseInsensitive
+        var count = 0
+        var searchRange = NSRange(location: 0, length: nsText.length)
+        while true {
+            let r = nsText.range(of: findText, options: options, range: searchRange)
+            if r.location == NSNotFound { break }
+            count += 1
+            let next = NSMaxRange(r)
+            if next >= nsText.length { break }
+            searchRange = NSRange(location: next, length: nsText.length - next)
+        }
+        return count
     }
 }
 
@@ -84,6 +109,7 @@ struct MainEditorView: View {
 struct TabBarView: View {
     @EnvironmentObject var tabManager: TabManager
     @AppStorage("isDarkMode") private var isDarkMode: Bool = false
+    @State private var draggingTabID: UUID?
 
     var body: some View {
         HStack(spacing: 0) {
@@ -91,14 +117,24 @@ struct TabBarView: View {
                 HStack(spacing: 1) {
                     ForEach(tabManager.tabs) { tab in
                         TabItemView(tab: tab, isSelected: tab.id == tabManager.selectedTabID)
+                            .opacity(draggingTabID == tab.id ? 0.5 : 1)
                             .onTapGesture {
                                 tabManager.selectTab(tab.id)
                             }
                             .contextMenu {
-                                Button("Close Tab") {
+                                Button(String(localized: "Close Tab")) {
                                     NotepadDocumentActions.closeTab(tab.id, in: tabManager)
                                 }
                             }
+                            .onDrag {
+                                draggingTabID = tab.id
+                                return NSItemProvider(object: tab.id.uuidString as NSString)
+                            }
+                            .onDrop(of: [UTType.text], delegate: TabReorderDropDelegate(
+                                targetID: tab.id,
+                                draggingID: $draggingTabID,
+                                tabManager: tabManager
+                            ))
                     }
                 }
                 .padding(.horizontal, 4)
@@ -274,5 +310,27 @@ struct StatusBarView: View {
         alert.informativeText = String(localized: "convertLossy.informative")
         alert.addButton(withTitle: String(localized: "OK"))
         alert.runModal()
+    }
+}
+
+// MARK: - Tab reorder (drag & drop)
+
+struct TabReorderDropDelegate: DropDelegate {
+    let targetID: UUID
+    @Binding var draggingID: UUID?
+    let tabManager: TabManager
+
+    func dropEntered(info: DropInfo) {
+        guard let draggingID, draggingID != targetID else { return }
+        tabManager.moveTab(draggingID, before: targetID)
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        draggingID = nil
+        return true
     }
 }

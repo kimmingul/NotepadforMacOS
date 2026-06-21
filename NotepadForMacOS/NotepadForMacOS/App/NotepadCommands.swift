@@ -75,6 +75,14 @@ struct NotepadCommands: Commands {
             Divider()
 
             Button {
+                let layout = NSPageLayout()
+                layout.runModal(with: NSPrintInfo.shared)
+            } label: {
+                Label(String(localized: "Page Setup..."), systemImage: "doc.badge.gearshape")
+            }
+            .keyboardShortcut("p", modifiers: [.command, .shift])
+
+            Button {
                 tabManager?.requestPrint()
             } label: {
                 Label(String(localized: "Print..."), systemImage: "printer")

@@ -241,8 +241,13 @@ final class SessionStore: ObservableObject {
 
     // MARK: - Clear
 
-    /// 세션 완전 삭제 (새 세션 시작 시)
+    /// 세션 완전 삭제 (새 세션 시작 / 창 닫힘 시)
     func clearSession(sessionID: UUID? = nil) {
+        // 지연된 저장이 디렉터리를 다시 만들지 않도록 먼저 취소
+        let key = sessionKey(for: sessionID)
+        saveWorkItems[key]?.cancel()
+        saveWorkItems[key] = nil
+
         let dir = directory(for: sessionID)
         let manifest = manifestURL(sessionID: sessionID)
         let fm = fileManager
