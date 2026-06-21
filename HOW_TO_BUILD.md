@@ -1,84 +1,71 @@
-# Notepad for macOS — Xcode 프로젝트 생성 및 빌드 방법
+# Notepad for macOS — 빌드 & 배포
 
-## 1. Xcode에서 새 프로젝트 만들기
+이 저장소는 완성된 Xcode 프로젝트를 포함합니다. 예전 문서에 있던 "새 프로젝트를 만들고 파일을 드래그" 하는 단계는 더 이상 필요 없습니다. 클론 후 바로 빌드하세요.
 
-1. Xcode 실행 → **File > New > Project...**
-2. **macOS** 탭 선택 → **App** 템플릿 선택 → **Next**
-3. 프로젝트 설정:
-   - **Product Name**: `Notepad for macOS`
-   - **Organization Identifier**: `com.min` 또는 원하는 값 (예: `com.yourname`)
-   - **Interface**: `SwiftUI`
-   - **Language**: `Swift`
-   - **Storage / Core Data**: 체크 해제 (초기)
-4. **Create**
+## 요구 사항
+- macOS (Apple Silicon), Xcode 26 이상
+- 커맨드라인 도구 (`xcodebuild`, `sips`, `iconutil`, `hdiutil`)
 
-## 2. 기존 파일 교체
+## 빠른 시작
 
-생성된 프로젝트에서 아래 파일/그룹을 **삭제**하세요:
-- `ContentView.swift`
-- `Notepad_for_macOSApp.swift` (또는 프로젝트 이름_App.swift)
-- 필요시 Preview Content
+```bash
+git clone <repo> notepad_macOS
+cd notepad_macOS
 
-그 후 이 저장소의 다음 파일들을 **프로젝트 네비게이터에 드래그해서 추가**:
-
-```
-Notepad for macOS/
-├── Notepad for macOS/
-│   ├── NotepadApp.swift
-│   ├── Models/
-│   │   ├── TextEncoding.swift
-│   │   ├── LineEnding.swift
-│   │   └── Document.swift
-│   ├── Managers/
-│   │   ├── TabManager.swift
-│   │   └── SessionStore.swift
-│   ├── Views/
-│   │   ├── MainEditorView.swift
-│   │   ├── EditorView.swift
-│   │   ├── TabBar... (이미 Main에 포함)
-│   │   ├── FindReplaceSheet.swift
-│   │   ├── GoToLineSheet.swift
-│   │   └── SettingsView.swift
-│   └── Helpers/
-│       └── AppDelegate.swift (선택)
+./build.sh            # Debug 빌드
+./build.sh release    # Release 빌드 (Hardened Runtime)
+./build.sh test       # 단위 테스트 실행
+./build.sh dist       # 배포용 dist/Notepad.dmg 생성
+./build.sh open       # Xcode에서 열기
+./build.sh clean      # 빌드 산출물 정리
 ```
 
-## 3. 빌드 설정 (Apple Silicon)
+Xcode에서 작업하려면 `NotepadForMacOS/NotepadForMacOS.xcodeproj`를 열고 `Cmd+R`(실행) / `Cmd+U`(테스트).
 
-- 프로젝트 선택 → **Build Settings**
-  - **Deployment** → **macOS Deployment Target**: `13.0` 또는 `14.0`
-  - **Architectures**:
-    - `Standard Architectures (arm64)`  ← Apple Silicon 전용 (직접 배포 추천)
-    - 또는 `Standard Architectures (Apple Silicon, Intel)` (Universal)
+## 프로젝트 레이아웃
 
-- **Signing & Capabilities**: 직접 배포이므로 필요에 따라 "Hardened Runtime"만 체크 (App Store 아님)
+소스와 리소스는 모두 `NotepadForMacOS/NotepadForMacOS/` 안에 있으며, Xcode의 **파일 시스템 동기화 그룹**으로 타깃에 자동 포함됩니다. 새 `.swift` 파일을 해당 폴더(또는 하위 폴더)에 넣기만 하면 빌드에 포함됩니다 — `project.pbxproj`를 수동 편집할 필요가 없습니다.
 
-## 4. Assets 및 기타
+```
+NotepadForMacOS/NotepadForMacOS/
+  App/         # @main, AppDelegate, 메뉴 명령, 문서 동작
+  Models/      # Document, LineEnding, TextEncoding
+  ViewModels/  # TabManager
+  Services/    # SessionStore, SecurityScopedFile
+  Views/       # 에디터/탭/상태바/시트/설정 뷰
+  Assets.xcassets, en.lproj, ko.lproj, Credits.rtf, LICENSE
+```
 
-- 기존 `Assets.xcassets` 유지
-- App Icon은 나중에 추가
+테스트는 `NotepadForMacOS/NotepadForMacOSTests/` 에 있으며 같은 방식으로 자동 포함됩니다.
 
-## 5. 실행
+## 샌드박스 / 엔타이틀먼트
 
-- `Cmd + R`
-- 메뉴: Notepad for macOS → Settings 에서 "Continue previous session" 토글 테스트
+앱은 App Sandbox를 사용하며 엔타이틀먼트는 `NotepadForMacOS/Notepad.entitlements`에 명시되어 있습니다:
+- `com.apple.security.app-sandbox`
+- `com.apple.security.files.user-selected.read-write` — 사용자가 연 파일에 저장 허용
+- `com.apple.security.files.bookmarks.app-scope` — 재실행 후 접근을 위한 보안 스코프 북마크
 
-## 6. 세션 복원 테스트 추천
+Release는 `ENABLE_HARDENED_RUNTIME=YES`, `CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO`로 빌드되어 `get-task-allow`가 포함되지 않습니다(배포 적합).
 
-1. 앱 실행
-2. 여러 탭 열고 내용 입력 (저장하지 않음)
-3. 앱 완전히 종료 (Cmd+Q)
-4. 다시 실행 → 내용이 그대로 복원되는지 확인
-5. mac 재부팅 후 테스트 (강력 추천)
+## 배포(서명 + 공증)
 
-## 7. 배포
+1. 한 번만: 공증 자격 증명을 keychain 프로파일로 저장
+   ```bash
+   xcrun notarytool store-credentials notary-profile \
+     --apple-id "you@example.com" --team-id TEAMID --password "app-specific-pw"
+   ```
+2. 환경 변수를 설정하고 `dist` 실행
+   ```bash
+   export DEVID_APP="Developer ID Application: Your Name (TEAMID)"
+   export NOTARY_PROFILE="notary-profile"
+   ./build.sh dist
+   ```
+   → Developer ID로 서명 → `dist/Notepad.dmg` 생성 → 공증 → 스테이플.
 
-- Xcode → **Product > Archive**
-- Organizer에서 Export → "Copy App" 또는 "Developer ID"로 서명해서 .app 배포
+환경 변수가 없으면 애드혹 서명 dmg만 만들고 다음 단계를 안내합니다(다른 Mac에서는 Gatekeeper 경고가 날 수 있음).
 
-## 문제 해결 팁
-
-- 컴파일 에러 "duplicate" : MainEditorView.swift 에 중복 EditorView 정의가 없는지 확인 (이미 제거함)
-- EUC-KR 테스트: 한국어로 된 레거시 .txt 파일을 열고 Status Bar의 인코딩 메뉴에서 "EUC-KR" 선택 후 Reopen as 테스트
-
-이제 코드를 계속 다듬겠습니다. 추가 요청 언제든 말씀해주세요!
+## 세션 복원 수동 테스트
+1. 앱 실행 → 여러 탭에 내용 입력(저장하지 않음)
+2. `Cmd+Q`로 종료 → 다시 실행 → 내용이 그대로 복원되는지 확인
+3. (권장) Mac 재부팅 후에도 복원되는지 확인
+4. EUC-KR: 레거시 `.txt`를 열고 상태바 인코딩 메뉴에서 "EUC-KR로 다시 열기" 확인

@@ -44,16 +44,19 @@ NotepadForMacOS Build Script
 
 Commands:
   build     Build Debug configuration (default)
-  release   Build Release configuration
+  release   Build Release configuration (Hardened Runtime)
+  test      Run the unit test suite
+  dist      Build Release and create dist/Notepad.dmg (signs+notarizes if DEVID_APP/NOTARY_PROFILE set)
   archive   Archive for distribution (Release + .xcarchive)
-  clean     Clean derived data and local build folder
+  clean     Clean derived data, build folder, and dist
   open      Open the Xcode project
   help      Show this help message
 
 Examples:
   ./build.sh
   ./build.sh release
-  ./build.sh archive
+  ./build.sh test
+  ./build.sh dist
   ./build.sh clean
 EOF
 }
@@ -172,6 +175,68 @@ do_archive() {
   echo "Or export from command line if you have an exportOptions.plist."
 }
 
+run_tests() {
+  ensure_build_dir
+  info "Running unit tests..."
+  xcodebuild test \
+    -project "$PROJECT" \
+    -scheme "$SCHEME" \
+    -destination 'platform=macOS,arch=arm64' \
+    -derivedDataPath "$BUILD_DIR/DerivedData" \
+    | tee "$BUILD_DIR/last-test.log"
+  success "Tests finished"
+}
+
+# Build Release, produce a distributable .dmg in dist/, and (if a Developer ID
+# identity + notary profile are provided via env) sign, notarize, and staple.
+do_dist() {
+  build_target "Release" "platform=macOS,arch=arm64"
+
+  local app_path="$BUILD_DIR/DerivedData/Build/Products/Release/Notepad.app"
+  if [[ ! -d "$app_path" ]]; then
+    error "Release app not found at $app_path"; exit 1
+  fi
+
+  local dist_dir="$SCRIPT_DIR/dist"
+  mkdir -p "$dist_dir"
+  local dmg_path="$dist_dir/Notepad.dmg"
+
+  # Developer ID signing (optional) — needs $DEVID_APP (e.g. "Developer ID Application: Name (TEAMID)")
+  if [[ -n "${DEVID_APP:-}" ]]; then
+    info "Signing with Developer ID + Hardened Runtime: $DEVID_APP"
+    codesign --force --options runtime --timestamp \
+      --entitlements "NotepadForMacOS/Notepad.entitlements" \
+      --sign "$DEVID_APP" "$app_path"
+  else
+    warn "DEVID_APP not set — keeping ad-hoc signature (Gatekeeper will warn on other Macs)."
+  fi
+
+  info "Creating $dmg_path"
+  rm -f "$dmg_path"
+  local staging="/tmp/NotepadDist.$$"
+  rm -rf "$staging"; mkdir -p "$staging"
+  cp -R "$app_path" "$staging/"
+  ln -s /Applications "$staging/Applications"
+  hdiutil create -volname "Notepad" -srcfolder "$staging" -ov -format UDZO "$dmg_path" >/dev/null
+  rm -rf "$staging"
+  success "Created $dmg_path"
+
+  # Notarize (optional) — needs $NOTARY_PROFILE stored via `xcrun notarytool store-credentials`
+  if [[ -n "${DEVID_APP:-}" && -n "${NOTARY_PROFILE:-}" ]]; then
+    info "Submitting for notarization (profile: $NOTARY_PROFILE)..."
+    xcrun notarytool submit "$dmg_path" --keychain-profile "$NOTARY_PROFILE" --wait
+    info "Stapling ticket..."
+    xcrun stapler staple "$dmg_path"
+    success "Notarized + stapled: $dmg_path"
+  else
+    echo ""
+    echo "To produce a Gatekeeper-friendly build, set:"
+    echo "  export DEVID_APP=\"Developer ID Application: Your Name (TEAMID)\""
+    echo "  export NOTARY_PROFILE=\"notary-profile\"   # via: xcrun notarytool store-credentials"
+    echo "then re-run: ./build.sh dist"
+  fi
+}
+
 do_clean() {
   info "Cleaning project..."
 
@@ -179,7 +244,7 @@ do_clean() {
     xcodebuild -project "$PROJECT" -scheme "$SCHEME" clean || true
   fi
 
-  rm -rf "$BUILD_DIR"
+  rm -rf "$BUILD_DIR" "$SCRIPT_DIR/dist"
   success "Clean complete"
 }
 
@@ -197,6 +262,12 @@ case "$command" in
     ;;
   release)
     build_target "Release" "platform=macOS,arch=arm64"
+    ;;
+  test)
+    run_tests
+    ;;
+  dist)
+    do_dist
     ;;
   archive)
     do_archive
