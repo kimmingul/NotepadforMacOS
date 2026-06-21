@@ -1,6 +1,49 @@
 import SwiftUI
 import AppKit
 
+/// 붙여넣기(Cmd+V) 후 비-wrap 모드에서 레이아웃/스크롤이 동기화되지 않던 문제를
+/// 바로잡기 위한 NSTextView 서브클래스.
+///
+/// 붙여넣기는 텍스트 변경일 뿐 아니라 커서를 붙여넣은 끝으로 옮기고 그 위치를
+/// 보이게 스크롤한다. 긴 한 줄을 붙여넣으면 가로 오프셋이 생겨 문장 중간이 보이고,
+/// document 프레임이 즉시 갱신되지 않아 가로 스크롤바도 나타나지 않는다.
+/// 타이핑은 `insertText(_:)` 경로라 이 오버라이드의 영향을 받지 않으므로,
+/// "붙여넣을 때만 맨 앞으로" 동작을 안전하게 구현할 수 있다.
+final class NotepadTextView: NSTextView {
+    private func revealPasteStart(from insertLoc: Int) {
+        guard let scrollView = enclosingScrollView,
+              let layoutManager, let textContainer else { return }
+        // 레이아웃을 동기 강제 → document 폭이 즉시 확정된다.
+        layoutManager.ensureLayout(for: textContainer)
+        // 스크롤러 기하를 갱신해 (오버레이) 스크롤바가 곧바로 반영되게 한다.
+        scrollView.reflectScrolledClipView(scrollView.contentView)
+        scrollView.tile()
+        // 커서(끝)가 아니라 붙여넣은 줄의 맨 앞으로 스크롤 → 좌측 여백도 복원된다.
+        let ns = string as NSString
+        let safeLoc = min(max(0, insertLoc), ns.length)
+        let lineStart = ns.lineRange(for: NSRange(location: safeLoc, length: 0)).location
+        scrollRangeToVisible(NSRange(location: lineStart, length: 0))
+        // 가로 위치를 확실히 줄 맨 앞(x=0)으로 강제한다(좌측 여백 복원).
+        let clip = scrollView.contentView
+        var origin = clip.bounds.origin
+        origin.x = 0
+        clip.scroll(to: origin)
+        scrollView.reflectScrolledClipView(clip)
+    }
+
+    override func paste(_ sender: Any?) {
+        let insertLoc = selectedRange().location
+        super.paste(sender)
+        revealPasteStart(from: insertLoc)
+    }
+
+    override func pasteAsPlainText(_ sender: Any?) {
+        let insertLoc = selectedRange().location
+        super.pasteAsPlainText(sender)
+        revealPasteStart(from: insertLoc)
+    }
+}
+
 /// NSTextView 기반 에디터.
 ///
 /// 설계: NSTextView가 편집 중 텍스트의 **단일 소스(source of truth)**다.
@@ -30,11 +73,22 @@ struct EditorTextView: NSViewRepresentable {
     }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSTextView.scrollableTextView()
-        let textView = scrollView.documentView as! NSTextView
+        // 팩토리(scrollableTextView)는 서브클래스를 만들 수 없으므로 수동 구성한다.
+        let textView = NotepadTextView(frame: .zero)
+        let scrollView = NSScrollView()
+        scrollView.documentView = textView
 
         scrollView.drawsBackground = true
         scrollView.backgroundColor = .textBackgroundColor
+        // 클래식(legacy) 스크롤바를 항상 표시한다.
+        scrollView.scrollerStyle = .legacy
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = true
+        scrollView.autohidesScrollers = false
+        textView.isVerticallyResizable = true
+        textView.minSize = NSSize(width: 0, height: 0)
+        // autoresizingMask는 wrap 여부에 따라 applyWrap에서 설정한다
+        // (비-wrap에서 [.width]는 콘텐츠 폭을 클립 폭에 묶어 가로 스크롤을 막는다).
         textView.isRichText = false
         textView.allowsUndo = true
         textView.isAutomaticQuoteSubstitutionEnabled = false
@@ -49,6 +103,18 @@ struct EditorTextView: NSViewRepresentable {
 
         applyWrap(to: textView, scrollView: scrollView)
         context.coordinator.textView = textView
+
+        // 탭 복귀(.id로 뷰 재생성) 시 가로 스크롤이 여백폭(lineFragmentPadding≈5px)만큼
+        // 밀려 첫 글자가 좌측 테두리에 붙는 문제 방지: 레이아웃 후 줄 맨 앞(x=0)으로 정렬한다.
+        // (makeNSView는 생성 시 1회만 실행되므로 편집/타이핑에는 영향이 없다.)
+        textView.setSelectedRange(NSRange(location: 0, length: 0))
+        DispatchQueue.main.async {
+            guard let container = textView.textContainer else { return }
+            textView.layoutManager?.ensureLayout(for: container)
+            let clip = scrollView.contentView
+            clip.scroll(to: NSPoint(x: 0, y: clip.bounds.origin.y))
+            scrollView.reflectScrolledClipView(clip)
+        }
         return scrollView
     }
 
@@ -64,6 +130,8 @@ struct EditorTextView: NSViewRepresentable {
     }
 
     private func applyWrap(to textView: NSTextView, scrollView: NSScrollView) {
+        // 줄바꿈(wrap)이 켜지면 가로 스크롤이 불필요하므로 가로 스크롤러를 끈다.
+        scrollView.hasHorizontalScroller = !wordWrap
         textView.textContainer?.widthTracksTextView = wordWrap
         textView.isHorizontallyResizable = !wordWrap
         let unbounded = NSSize(width: CGFloat.greatestFiniteMagnitude, height: .greatestFiniteMagnitude)
@@ -71,9 +139,13 @@ struct EditorTextView: NSViewRepresentable {
             let width = scrollView.contentSize.width
             textView.textContainer?.containerSize = NSSize(width: width, height: .greatestFiniteMagnitude)
             textView.maxSize = NSSize(width: width, height: .greatestFiniteMagnitude)
+            // wrap: 텍스트뷰 폭이 클립 폭을 따라가야 한다.
+            textView.autoresizingMask = [.width]
         } else {
             textView.textContainer?.containerSize = unbounded
             textView.maxSize = unbounded
+            // 비-wrap: 콘텐츠가 클립보다 넓어질 수 있어야 하므로 폭을 묶지 않는다.
+            textView.autoresizingMask = []
         }
     }
 
