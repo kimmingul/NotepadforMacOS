@@ -38,6 +38,14 @@ final class TabManager: ObservableObject {
     private let sessionID: UUID?
     private var terminationObserver: NSObjectProtocol?
     private var sessionResetObserver: NSObjectProtocol?
+    private var pendingCursorState: CursorState?
+
+    private struct CursorState: Equatable {
+        let documentID: UUID
+        let line: Int
+        let col: Int
+        let selectionLength: Int
+    }
 
     // MARK: - Init & Restore
 
@@ -351,10 +359,12 @@ final class TabManager: ObservableObject {
     }
 
     private func resetToFreshTab() {
+        pendingCursorState = nil
         tabs.removeAll()
         selectedTabID = nil
         cursorLine = 1
         cursorCol = 1
+        selectionLength = 0
         pendingEditorCommand = nil
         newTab()
     }
@@ -386,10 +396,36 @@ final class TabManager: ObservableObject {
         pendingEditorCommand = EditorCommand(documentID: id, action: .insertText(timeString))
     }
 
-    func updateCursor(line: Int, col: Int, selectionLength: Int = 0) {
-        cursorLine = line
-        cursorCol = col
-        self.selectionLength = selectionLength
+    func updateCursor(for documentID: UUID, line: Int, col: Int, selectionLength: Int = 0) {
+        guard selectedTabID == documentID else { return }
+
+        let state = CursorState(documentID: documentID, line: line, col: col, selectionLength: selectionLength)
+        if pendingCursorState == state { return }
+        if pendingCursorState == nil,
+           cursorLine == line,
+           cursorCol == col,
+           self.selectionLength == selectionLength {
+            return
+        }
+
+        pendingCursorState = state
+        DispatchQueue.main.async { [weak self] in
+            self?.applyPendingCursorUpdate()
+        }
+    }
+
+    private func applyPendingCursorUpdate() {
+        guard let state = pendingCursorState else { return }
+        pendingCursorState = nil
+
+        guard selectedTabID == state.documentID else { return }
+        guard cursorLine != state.line ||
+              cursorCol != state.col ||
+              selectionLength != state.selectionLength else { return }
+
+        cursorLine = state.line
+        cursorCol = state.col
+        selectionLength = state.selectionLength
     }
 
     // MARK: - Editor Commands

@@ -417,7 +417,7 @@ struct EditorTextView: NSViewRepresentable {
             }
 
             let col = max(1, loc - lineStart + 1)
-            tabManager?.updateCursor(line: line, col: col, selectionLength: selected.length)
+            tabManager?.updateCursor(for: documentID, line: line, col: col, selectionLength: selected.length)
         }
     }
 }
