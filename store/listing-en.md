@@ -50,9 +50,9 @@ First release.
 • Fully sandboxed, no data collection
 
 ## URLs
-- Support URL (required, must be https):  https://github.com/<your-username>/notepad_macOS   ← replace with your repo or a support page
+- Support URL (required, must be https):  https://github.com/kimmingul/NotepadforMacOS
 - Marketing URL (optional):  (leave blank or same as above)
-- Privacy Policy URL (required): host store/privacy-policy.html (see submission-checklist.md) → e.g. https://<your-username>.github.io/notepad_macOS/privacy-policy.html
+- Privacy Policy URL (required):  https://kimmingul.github.io/NotepadforMacOS/store/privacy-policy.html
 
 ## Category
 - Primary: Productivity
