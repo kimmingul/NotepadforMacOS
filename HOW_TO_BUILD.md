@@ -47,7 +47,45 @@ NotepadForMacOS/NotepadForMacOS/
 
 Release는 `ENABLE_HARDENED_RUNTIME=YES`, `CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO`로 빌드되어 `get-task-allow`가 포함되지 않습니다(배포 적합).
 
-## 배포(서명 + 공증)
+## 배포
+
+배포 경로는 둘이며, **서로 다른 인증서**를 씁니다. 헷갈리기 쉬우니 먼저 용어를 정리합니다.
+
+| 인증서 종류 | 용도 | 어디에 쓰나 |
+|---|---|---|
+| **Apple Development** | 개발/디버깅(내 기기에서 실행) | 평소 `Cmd+R` 빌드 |
+| **Apple Distribution** + **Mac Installer Distribution** | **Mac App Store** 제출 | `./build.sh appstore` |
+| **Developer ID Application** | **App Store 밖** 직접 배포(공증+DMG) | `./build.sh dist` |
+
+> Apple Developer Program(연 $99) 멤버십이 활성화돼 있어야 위 인증서를 발급할 수 있습니다.
+> "Apple Development ID"는 보통 이 멤버십 가입을 뜻하며, 배포용 인증서(위 2·3번)는 별도로 발급해야 합니다.
+
+### A. Mac App Store (`./build.sh appstore`)
+
+준비(각 1회):
+1. **인증서**: Xcode → Settings → Accounts → 계정 추가 → **Manage Certificates** →
+   `+`로 **Apple Distribution**, **Mac Installer Distribution** 생성. (계정이 로그인돼 있어야
+   `-allowProvisioningUpdates`가 프로비저닝 프로파일을 자동 생성합니다.)
+2. **App Store Connect**에 앱 레코드 생성: Bundle ID `com.nanumspace.mgkim.NotepadForMacOS` 등록,
+   고유한 **앱 이름**(스토어에 "Notepad"는 이미 있을 가능성이 큼 → 예: "MG Notepad"),
+   카테고리·개인정보·스크린샷 입력.
+3. **업로드 인증**(택1):
+   - App Store Connect API 키(권장, 2FA 없음): Users and Access → Integrations → API 키 생성 →
+     `AuthKey_XXXX.p8`를 `~/.appstoreconnect/private_keys/`에 저장. `ASC_KEY_ID`, `ASC_ISSUER_ID` 확보.
+   - 또는 app-specific password: appleid.apple.com에서 발급 → `ASC_APPLE_ID`, `ASC_APP_PASSWORD`.
+
+실행:
+```bash
+export APPSTORE_TEAM_ID="ABCDE12345"          # developer.apple.com → Membership
+export ASC_KEY_ID="XXXXXXXXXX"                # (API 키 방식일 때)
+export ASC_ISSUER_ID="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+./build.sh appstore
+```
+→ Release 아카이브 → `dist/appstore/Notepad.pkg` export → App Store Connect 업로드.
+업로드 인증 변수를 안 주면 `.pkg`까지만 만들고 다음 단계를 안내합니다.
+업로드 후 App Store Connect에서 빌드 선택 → 메타데이터 확인 → **심사 제출**.
+
+### B. Developer ID — App Store 밖 직접 배포 (`./build.sh dist`)
 
 1. 한 번만: 공증 자격 증명을 keychain 프로파일로 저장
    ```bash

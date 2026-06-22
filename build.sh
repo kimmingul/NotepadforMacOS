@@ -11,6 +11,9 @@
 #   ./build.sh build          # Same as above
 #   ./build.sh release        # Release build (arm64)
 #   ./build.sh archive        # Create timestamped .xcarchive
+#   ./build.sh dist           # Developer ID DMG (sign + notarize) — outside the App Store
+#   ./build.sh appstore       # Mac App Store .pkg (export + optional upload)
+#   ./build.sh upload         # Upload an existing .pkg to App Store Connect (no rebuild)
 #   ./build.sh clean          # Clean build products
 #   ./build.sh open           # Open in Xcode
 #   ./build.sh --help
@@ -46,17 +49,35 @@ Commands:
   build     Build Debug configuration (default)
   release   Build Release configuration (Hardened Runtime)
   test      Run the unit test suite
-  dist      Build Release and create dist/Notepad.dmg (signs+notarizes if DEVID_APP/NOTARY_PROFILE set)
+  dist      Developer ID DMG for direct distribution: build Release + dist/Notepad.dmg
+            (signs + notarizes if DEVID_APP/NOTARY_PROFILE set). NOT for the App Store.
+  appstore  Mac App Store: archive Release, export dist/appstore/Notepad.pkg, and
+            (if upload creds are set) upload to App Store Connect. Requires APPSTORE_TEAM_ID.
+  upload    Upload an already-built .pkg to App Store Connect without rebuilding
+            (defaults to dist/appstore/Notepad.pkg; needs ASC_* upload creds).
   archive   Archive for distribution (Release + .xcarchive)
   clean     Clean derived data, build folder, and dist
   open      Open the Xcode project
   help      Show this help message
+
+Environment variables:
+  Developer ID (dist):
+    DEVID_APP        "Developer ID Application: Your Name (TEAMID)"
+    NOTARY_PROFILE   keychain profile name from `xcrun notarytool store-credentials`
+  App Store (appstore):
+    APPSTORE_TEAM_ID 10-char Team ID (developer.apple.com -> Membership)         [required]
+    ASC_KEY_ID       App Store Connect API key id  (key at
+                     ~/.appstoreconnect/private_keys/AuthKey_<ASC_KEY_ID>.p8)     ] upload
+    ASC_ISSUER_ID    App Store Connect API issuer id                             ] via API key
+    ASC_APPLE_ID     Apple ID email                                              ] or upload via
+    ASC_APP_PASSWORD app-specific password (appleid.apple.com)                   ] Apple ID
 
 Examples:
   ./build.sh
   ./build.sh release
   ./build.sh test
   ./build.sh dist
+  ./build.sh appstore
   ./build.sh clean
 EOF
 }
@@ -249,6 +270,130 @@ do_dist() {
   fi
 }
 
+# Upload a .pkg to App Store Connect via altool, using whichever credentials are set.
+# Returns non-zero (and prints how to set creds) if no credentials are available.
+upload_pkg() {
+  local pkg="$1"
+  if [[ -n "${ASC_KEY_ID:-}" && -n "${ASC_ISSUER_ID:-}" ]]; then
+    info "Uploading to App Store Connect via API key $ASC_KEY_ID..."
+    xcrun altool --upload-app --type macos --file "$pkg" \
+      --api-key "$ASC_KEY_ID" --api-issuer "$ASC_ISSUER_ID"
+    success "Upload submitted. Watch App Store Connect -> your app -> Activity."
+    return 0
+  elif [[ -n "${ASC_APPLE_ID:-}" && -n "${ASC_APP_PASSWORD:-}" ]]; then
+    info "Uploading to App Store Connect as $ASC_APPLE_ID..."
+    xcrun altool --upload-app --type macos --file "$pkg" \
+      --username "$ASC_APPLE_ID" --password "$ASC_APP_PASSWORD"
+    success "Upload submitted. Watch App Store Connect -> your app -> Activity."
+    return 0
+  fi
+  echo ""
+  echo "Package NOT uploaded ($pkg). To upload, set ONE of:"
+  echo "  - API key:  export ASC_KEY_ID=XXXXXXXXXX ASC_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+  echo "              (place the key at ~/.appstoreconnect/private_keys/AuthKey_XXXXXXXXXX.p8)"
+  echo "  - Apple ID: export ASC_APPLE_ID=you@example.com ASC_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx"
+  echo "then:  ./build.sh upload        (uploads the existing .pkg, no rebuild)"
+  return 1
+}
+
+# Archive Release, export a Mac App Store .pkg, and (if upload creds are set) upload
+# it to App Store Connect.
+#
+# Requires:
+#   - An "Apple Distribution" cert AND a "Mac Installer Distribution" (a.k.a.
+#     "3rd Party Mac Developer Installer") cert in your keychain.
+#   - An Xcode account signed in (Xcode > Settings > Accounts) so that
+#     -allowProvisioningUpdates can fetch/create the Mac App Store provisioning profile.
+#   - The App ID + app record already created in App Store Connect.
+#
+# Required env:  APPSTORE_TEAM_ID
+# Upload (optional — pick ONE group; otherwise the .pkg is only exported):
+#   API key (recommended, no 2FA):  ASC_KEY_ID + ASC_ISSUER_ID
+#   Apple ID:                        ASC_APPLE_ID + ASC_APP_PASSWORD
+do_appstore() {
+  ensure_build_dir
+  : "${APPSTORE_TEAM_ID:?Set APPSTORE_TEAM_ID (10-char Team ID from developer.apple.com -> Membership)}"
+
+  local timestamp archive_path export_dir
+  timestamp=$(date +%Y%m%d-%H%M%S)
+  archive_path="$BUILD_DIR/AppStore-${timestamp}.xcarchive"
+  export_dir="$SCRIPT_DIR/dist/appstore"
+  rm -rf "$export_dir"; mkdir -p "$export_dir"
+
+  info "Archiving Release for the App Store (team $APPSTORE_TEAM_ID)..."
+  xcodebuild \
+    -project "$PROJECT" \
+    -scheme "$SCHEME" \
+    -configuration Release \
+    -destination 'generic/platform=macOS' \
+    -archivePath "$archive_path" \
+    -allowProvisioningUpdates \
+    DEVELOPMENT_TEAM="$APPSTORE_TEAM_ID" \
+    CODE_SIGN_STYLE=Automatic \
+    archive \
+    | tee "$BUILD_DIR/last-appstore-archive.log"
+
+  # The export "method" string changed across Xcode versions (app-store ->
+  # app-store-connect). Try the modern name first, fall back if this Xcode rejects it.
+  local export_log="$BUILD_DIR/last-appstore-export.log"
+  local eo="$BUILD_DIR/ExportOptions-appstore.plist"
+  local exported=0 method
+  for method in app-store-connect app-store; do
+    info "Exporting App Store package (method=$method)..."
+    cat > "$eo" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>method</key><string>$method</string>
+  <key>teamID</key><string>$APPSTORE_TEAM_ID</string>
+  <key>signingStyle</key><string>automatic</string>
+  <key>destination</key><string>export</string>
+</dict>
+</plist>
+EOF
+    if xcodebuild -exportArchive \
+         -archivePath "$archive_path" \
+         -exportPath "$export_dir" \
+         -exportOptionsPlist "$eo" \
+         -allowProvisioningUpdates >"$export_log" 2>&1; then
+      exported=1; break
+    fi
+    if ! grep -qi "for key .method." "$export_log"; then
+      # Failure is unrelated to the method string — surface it and stop retrying.
+      cat "$export_log"; break
+    fi
+    warn "method=$method rejected by this Xcode — trying the alternative name..."
+  done
+
+  if [[ "$exported" != "1" ]]; then
+    error "App Store export failed — see $export_log"
+    exit 1
+  fi
+
+  local pkg
+  pkg=$(/usr/bin/find "$export_dir" -maxdepth 1 -name '*.pkg' | head -1)
+  if [[ -z "$pkg" ]]; then
+    error "No .pkg produced in $export_dir"; exit 1
+  fi
+  success "Exported App Store package: $pkg"
+
+  upload_pkg "$pkg" || true
+}
+
+# Upload an already-built .pkg to App Store Connect WITHOUT rebuilding.
+#   ./build.sh upload [path-to.pkg]   (defaults to dist/appstore/Notepad.pkg)
+do_upload() {
+  local pkg="${1:-}"
+  pkg="${pkg:-$SCRIPT_DIR/dist/appstore/Notepad.pkg}"
+  if [[ ! -f "$pkg" ]]; then
+    error "No package at $pkg — run ./build.sh appstore first (or pass a path)."
+    exit 1
+  fi
+  info "Uploading existing package: $pkg"
+  upload_pkg "$pkg"
+}
+
 do_clean() {
   info "Cleaning project..."
 
@@ -280,6 +425,12 @@ case "$command" in
     ;;
   dist)
     do_dist
+    ;;
+  appstore)
+    do_appstore
+    ;;
+  upload)
+    do_upload "${2:-}"
     ;;
   archive)
     do_archive
