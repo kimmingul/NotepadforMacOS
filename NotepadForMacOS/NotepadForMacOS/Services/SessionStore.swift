@@ -14,7 +14,7 @@ final class SessionStore: ObservableObject {
     private let fileManager = FileManager.default
 
     /// 모든 디스크 I/O를 직렬화하는 백그라운드 큐 (메인 스레드 보호).
-    private let ioQueue = DispatchQueue(label: "com.jbnu.mgkim.NotepadForMacOS.session-io", qos: .utility)
+    private let ioQueue = DispatchQueue(label: "com.nanumspace.mgkim.NotepadForMacOS.session-io", qos: .utility)
 
     @Published var shouldRestorePreviousSession: Bool = true
 
