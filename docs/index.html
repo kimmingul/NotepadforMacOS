@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notepad for macOS</title>
+  <meta name="description" content="Windows 11 메모장에서 영감을 받은 macOS용 네이티브 플레인 텍스트 편집기. 멀티 탭, 세션 복원, EUC-KR 등 한국어 인코딩을 지원합니다.">
+  <meta property="og:title" content="Notepad for macOS">
+  <meta property="og:description" content="빠르고 단순한 macOS 플레인 텍스트 편집기. 탭, 자동 세션 복원, 한국어 레거시 인코딩 지원.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="assets/app-icon.png">
+  <link rel="icon" href="assets/app-icon.png">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --line: #d2d2d7;
+      --blue: #0071e3;
+      --blue-hover: #0077ed;
+      --amber: #b35a00;
+      --green: #007a3d;
+      --shadow: 0 26px 80px rgba(0, 0, 0, .14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Apple SD Gothic Neo", "Noto Sans KR", "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      letter-spacing: 0;
+      -webkit-font-smoothing: antialiased;
+      word-break: keep-all;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      height: 52px;
+      display: flex;
+      justify-content: center;
+      border-bottom: 1px solid rgba(0, 0, 0, .08);
+      background: rgba(245, 245, 247, .78);
+      backdrop-filter: saturate(180%) blur(20px);
+    }
+
+    .nav-inner {
+      width: min(1120px, calc(100% - 36px));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 22px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--text);
+      min-width: 0;
+    }
+
+    .brand img {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .button {
+      display: inline-flex;
+      min-height: 36px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 8px 18px;
+      background: var(--blue);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .button:hover {
+      background: var(--blue-hover);
+      text-decoration: none;
+    }
+
+    .button.secondary {
+      background: transparent;
+      color: var(--blue);
+      border: 1px solid rgba(0, 113, 227, .35);
+    }
+
+    .hero {
+      min-height: calc(100vh - 52px);
+      display: grid;
+      align-items: center;
+      padding: 64px 22px 58px;
+      background: linear-gradient(180deg, #fff 0%, var(--bg) 86%);
+      overflow: hidden;
+    }
+
+    .hero-inner {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, .82fr) minmax(440px, 1.18fr);
+      align-items: center;
+      gap: 54px;
+    }
+
+    .eyebrow {
+      margin: 0 0 16px;
+      color: var(--amber);
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 680px;
+      font-size: clamp(48px, 7vw, 86px);
+      line-height: .97;
+      font-weight: 740;
+      letter-spacing: 0;
+    }
+
+    .hero-copy {
+      margin: 24px 0 0;
+      max-width: 660px;
+      color: var(--muted);
+      font-size: clamp(21px, 2.15vw, 28px);
+      line-height: 1.24;
+      font-weight: 500;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 32px;
+      align-items: center;
+    }
+
+    .availability {
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .product-visual {
+      position: relative;
+      min-height: 548px;
+      display: grid;
+      align-items: center;
+    }
+
+    .app-icon {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 116px;
+      height: 116px;
+      border-radius: 26px;
+      transform: translateX(-50%);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, .2);
+      z-index: 2;
+    }
+
+    .screenshot-shell {
+      margin-top: 78px;
+      border-radius: 24px;
+      overflow: hidden;
+      background: #e9e9ec;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(0, 0, 0, .08);
+    }
+
+    .window-bar {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+      background: linear-gradient(180deg, #f6f6f8, #e7e7ea);
+      border-bottom: 1px solid rgba(0, 0, 0, .08);
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .red { background: #ff5f57; }
+    .yellow { background: #ffbd2e; }
+    .green { background: #28c840; }
+
+    .screenshot-shell img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .section {
+      padding: 84px 22px;
+    }
+
+    .section-inner {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+    }
+
+    .section-title {
+      margin: 0 auto 16px;
+      max-width: 860px;
+      text-align: center;
+      font-size: clamp(34px, 4.3vw, 58px);
+      line-height: 1.04;
+      font-weight: 740;
+    }
+
+    .section-lede {
+      margin: 0 auto 44px;
+      max-width: 770px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 21px;
+      line-height: 1.38;
+      font-weight: 500;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .feature {
+      min-height: 230px;
+      border-radius: 28px;
+      padding: 28px;
+      background: var(--surface);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, .04);
+    }
+
+    .feature h3 {
+      margin: 0 0 12px;
+      font-size: 26px;
+      line-height: 1.1;
+    }
+
+    .feature p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.44;
+      font-weight: 500;
+    }
+
+    .showcase {
+      display: grid;
+      grid-template-columns: minmax(0, .8fr) minmax(480px, 1.2fr);
+      gap: 42px;
+      align-items: center;
+    }
+
+    .showcase h2 {
+      margin: 0;
+      font-size: clamp(34px, 4vw, 56px);
+      line-height: 1.04;
+    }
+
+    .showcase p {
+      margin: 20px 0 0;
+      color: var(--muted);
+      font-size: 21px;
+      line-height: 1.38;
+      font-weight: 500;
+    }
+
+    .showcase-shot {
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(0, 0, 0, .08);
+      background: var(--surface);
+    }
+
+    .showcase-shot img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .privacy {
+      border-radius: 34px;
+      background: #111;
+      color: #f5f5f7;
+      padding: 56px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 42px;
+      align-items: center;
+    }
+
+    .privacy h2 {
+      margin: 0;
+      font-size: clamp(34px, 4vw, 56px);
+      line-height: 1.04;
+    }
+
+    .privacy p {
+      margin: 0;
+      color: #a1a1a6;
+      font-size: 21px;
+      line-height: 1.38;
+      font-weight: 500;
+    }
+
+    .release {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: center;
+      border-top: 1px solid var(--line);
+      padding-top: 34px;
+    }
+
+    .release h2 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+
+    .release p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    footer {
+      padding: 26px 22px 44px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    footer .section-inner {
+      border-top: 1px solid var(--line);
+      padding-top: 18px;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 900px) {
+      .nav-links a:not(.button) {
+        display: none;
+      }
+
+      .hero {
+        min-height: auto;
+        padding-top: 46px;
+      }
+
+      .hero-inner,
+      .showcase {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+
+      .hero-copy,
+      h1,
+      .showcase p {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .hero-actions {
+        justify-content: center;
+      }
+
+      .product-visual {
+        min-height: auto;
+      }
+
+      .feature-grid,
+      .privacy,
+      .release {
+        grid-template-columns: 1fr;
+      }
+
+      .privacy {
+        padding: 34px 28px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .brand span {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .button {
+        width: 100%;
+      }
+
+      .hero-actions {
+        width: 100%;
+      }
+
+      .section {
+        padding: 64px 18px;
+      }
+
+      .feature {
+        min-height: auto;
+        border-radius: 22px;
+        padding: 24px;
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000;
+        --surface: #161617;
+        --text: #f5f5f7;
+        --muted: #a1a1a6;
+        --line: #2f2f32;
+        --amber: #ff9f0a;
+        --green: #30d158;
+      }
+
+      .nav {
+        border-bottom-color: rgba(255, 255, 255, .12);
+        background: rgba(22, 22, 23, .72);
+      }
+
+      .hero {
+        background: linear-gradient(180deg, #0b0b0c 0%, #000 86%);
+      }
+
+      .screenshot-shell,
+      .showcase-shot {
+        border-color: rgba(255, 255, 255, .14);
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav" aria-label="주요 탐색">
+    <div class="nav-inner">
+      <a class="brand" href="#top" aria-label="Notepad for macOS 홈">
+        <img src="assets/app-icon.png" alt="">
+        <span>Notepad for macOS</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">기능</a>
+        <a href="#privacy">개인정보</a>
+        <a href="#download" class="button">다운로드</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-inner">
+        <div>
+          <p class="eyebrow">Native macOS app</p>
+          <h1>메모장은 단순해야 합니다.</h1>
+          <p class="hero-copy">Notepad는 Windows 11 메모장의 익숙함을 macOS에 맞게 다시 만든 플레인 텍스트 편집기입니다. 탭, 세션 복원, EUC-KR까지 빠르게 다룹니다.</p>
+          <div class="hero-actions">
+            <a class="button" href="https://github.com/kimmingul/NotepadforMacOS/releases/latest">최신 버전 받기</a>
+            <a class="button secondary" href="https://github.com/kimmingul/NotepadforMacOS">GitHub에서 보기</a>
+          </div>
+          <p class="availability">macOS용 SwiftUI + AppKit 네이티브 앱. App Store 제출용 개인정보 처리방침과 지원 페이지를 함께 제공합니다.</p>
+        </div>
+
+        <div class="product-visual" aria-label="Notepad for macOS 화면 미리보기">
+          <img class="app-icon" src="assets/app-icon.png" alt="Notepad for macOS 앱 아이콘">
+          <div class="screenshot-shell">
+            <div class="window-bar">
+              <span class="dot red"></span>
+              <span class="dot yellow"></span>
+              <span class="dot green"></span>
+            </div>
+            <img src="assets/tabs-korean.png" alt="여러 탭과 한국어 텍스트를 표시하는 Notepad for macOS 화면">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="section-inner">
+        <h2 class="section-title">오직 텍스트에 집중한 macOS 메모장.</h2>
+        <p class="section-lede">서식, 마크다운, 계정, AI 기능 없이 파일을 열고 쓰고 저장하는 기본기를 네이티브 앱답게 정돈했습니다.</p>
+        <div class="feature-grid">
+          <article class="feature">
+            <h3>세션 복원.</h3>
+            <p>저장하지 않은 탭까지 종료 전 상태로 복원합니다. 재시작이나 재부팅 후에도 이전 작업을 이어갈 수 있습니다.</p>
+          </article>
+          <article class="feature">
+            <h3>멀티 탭.</h3>
+            <p>한 창에서 여러 문서를 열고, 드래그로 순서를 바꾸고, Ctrl-Tab으로 빠르게 이동합니다.</p>
+          </article>
+          <article class="feature">
+            <h3>한국어 인코딩.</h3>
+            <p>UTF-8, UTF-8 BOM, EUC-KR, UTF-16 LE/BE를 열고 저장하며 상태바에서 다시 열기와 변환을 지원합니다.</p>
+          </article>
+          <article class="feature">
+            <h3>찾기와 바꾸기.</h3>
+            <p>작업 흐름을 막지 않는 인라인 찾기/바꾸기 막대에서 일치 개수, 둘러 찾기, 대소문자 옵션을 확인합니다.</p>
+          </article>
+          <article class="feature">
+            <h3>필요한 도구.</h3>
+            <p>줄로 이동, 시간/날짜 삽입, 자동 줄 바꿈, 확대/축소, 인쇄와 페이지 설정을 갖췄습니다.</p>
+          </article>
+          <article class="feature">
+            <h3>macOS답게.</h3>
+            <p>SwiftUI와 NSTextView 기반으로 라이트/다크 모드, 샌드박스, 보안 스코프 파일 접근을 지원합니다.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-inner">
+        <div class="showcase">
+          <div>
+            <h2>가볍지만 잃어버리지 않습니다.</h2>
+            <p>Notepad는 plain text 전용입니다. 대신 탭과 미저장 문서를 안전하게 기억하고, 파일 접근 실패 시 빈 내용으로 자동 덮어쓰지 않습니다.</p>
+          </div>
+          <div class="showcase-shot">
+            <img src="assets/welcome.png" alt="Notepad for macOS 시작 화면">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="privacy" class="section">
+      <div class="section-inner">
+        <div class="privacy">
+          <h2>파일은 Mac 안에 남습니다.</h2>
+          <p>Notepad는 네트워크 연결, 광고, 추적, 데이터 수집 없이 동작하도록 설계되었습니다. 선택한 파일만 열고, 앱 샌드박스 안에서 작업합니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="download" class="section">
+      <div class="section-inner">
+        <div class="release">
+          <div>
+            <h2>Notepad for macOS v1.0</h2>
+            <p>직접 배포용 DMG는 GitHub Releases에서 받을 수 있습니다. 개인정보 처리방침은 <a href="store/privacy-policy.html">여기</a>에서 확인할 수 있습니다.</p>
+          </div>
+          <a class="button" href="https://github.com/kimmingul/NotepadforMacOS/releases/latest">Download</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="section-inner">
+      <span>Copyright © 2026 Min-Gul Kim. All rights reserved.</span>
+      <span>Developed by Min-Gul Kim, MD, PhD</span>
+    </div>
+  </footer>
+</body>
+</html>
