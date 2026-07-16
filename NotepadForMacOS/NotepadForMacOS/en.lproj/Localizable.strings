@@ -96,3 +96,50 @@
 "License" = "License";
 "View License" = "View License...";
 "MIT License" = "MIT License";
+
+/* v1.1 — Spelling */
+"settings.spelling" = "Spelling";
+"settings.spellCheck" = "Spell check";
+"settings.autoCorrect" = "Autocorrect";
+"settings.spelling.caption" = "Uses the macOS system dictionary. No network access. Autocorrect only runs when spell check is on and the file type is allowed.";
+"settings.disabledExtensions" = "Disable spell check for these extensions";
+"settings.disabledExtensions.caption" = "Comma-separated list (e.g. log, json, swift). Untitled tabs and .txt still use the global toggle.";
+"settings.disabledExtensions.reset" = "Reset to defaults";
+"menu.spellCheck" = "Check Spelling While Typing";
+"menu.autoCorrect" = "Correct Spelling Automatically";
+
+/* v1.1 — Font / status */
+"settings.fontSize.caption" = "Also used as zoom level (View → Zoom In/Out). Reset Zoom returns to 14 pt.";
+"settings.font.caption" = "Applies to all open tabs immediately. Plain text only — one font for the whole document.";
+"status.gotoLine.help" = "Go to Line…";
+"status.zoom.help" = "Zoom level relative to 14 pt (View menu)";
+"status.zoom.a11y" = "Zoom %d percent";
+"status.lineEnding.a11y" = "Line ending %@";
+"status.encoding.help" = "Reopen with encoding or convert current text";
+"status.encoding.a11y" = "Encoding %@";
+"status.encoding.reopen" = "Reopen with Encoding";
+"status.encoding.convert" = "Convert";
+"menu.resetZoom.help" = "Reset font size to 14 pt";
+
+/* v1.1 — Onboarding */
+"settings.help" = "Help";
+"settings.showWelcomeAgain" = "Show Welcome Again…";
+"menu.welcome" = "Welcome…";
+"menu.whatsNew" = "What's New…";
+"welcome.title" = "Welcome to Notepad";
+"welcome.subtitle" = "A fast plain-text editor for macOS — inspired by Windows Notepad.";
+"welcome.bullet.tabs" = "Multiple tabs with drag reorder and Ctrl+Tab.";
+"welcome.bullet.session" = "Session restore keeps unsaved text across restarts.";
+"welcome.bullet.encoding" = "UTF-8, EUC-KR, UTF-16 and more from the status bar.";
+"welcome.bullet.spelling" = "Optional spell check and autocorrect (system dictionary).";
+"welcome.bullet.find" = "Inline find/replace, print, and go to line.";
+"welcome.footer" = "No AI. No network. No account. Your files stay on this Mac.";
+"welcome.getStarted" = "Get Started";
+"whatsNew.title" = "What's New in %@";
+"whatsNew.subtitle" = "Plain-text improvements in this release:";
+"whatsNew.generic" = "Bug fixes and small improvements.";
+"whatsNew.1_1.spell" = "Spell check with underlines and suggestions (system dictionary).";
+"whatsNew.1_1.autocorrect" = "Optional autocorrect, off by default.";
+"whatsNew.1_1.settings" = "Disable spelling for code/log file extensions.";
+"whatsNew.1_1.onboarding" = "Welcome on first launch and What's New on upgrades.";
+"whatsNew.1_1.polish" = "Clearer font settings and status bar (go to line, encoding menus).";

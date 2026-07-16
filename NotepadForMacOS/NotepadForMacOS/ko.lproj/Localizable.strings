@@ -96,3 +96,50 @@
 "License" = "라이선스";
 "View License" = "라이선스 보기...";
 "MIT License" = "MIT 라이선스";
+
+/* v1.1 — Spelling */
+"settings.spelling" = "맞춤법";
+"settings.spellCheck" = "맞춤법 검사";
+"settings.autoCorrect" = "자동 수정";
+"settings.spelling.caption" = "macOS 시스템 사전을 사용합니다. 네트워크에 연결하지 않습니다. 자동 수정은 맞춤법 검사가 켜져 있고 허용된 파일 형식일 때만 동작합니다.";
+"settings.disabledExtensions" = "다음 확장자에서는 맞춤법 검사 끄기";
+"settings.disabledExtensions.caption" = "쉼표로 구분 (예: log, json, swift). 제목 없음 탭과 .txt는 전역 설정을 따릅니다.";
+"settings.disabledExtensions.reset" = "기본값으로 재설정";
+"menu.spellCheck" = "입력하는 동안 맞춤법 검사";
+"menu.autoCorrect" = "맞춤법 자동 수정";
+
+/* v1.1 — Font / status */
+"settings.fontSize.caption" = "확대/축소에도 사용됩니다(보기 → 확대/축소). 재설정 시 14 pt로 돌아갑니다.";
+"settings.font.caption" = "열린 모든 탭에 즉시 적용됩니다. 일반 텍스트 전용 — 문서 전체에 하나의 글꼴만 사용합니다.";
+"status.gotoLine.help" = "줄로 이동…";
+"status.zoom.help" = "14 pt 기준 확대/축소 (보기 메뉴)";
+"status.zoom.a11y" = "확대 %d 퍼센트";
+"status.lineEnding.a11y" = "줄바꿈 %@";
+"status.encoding.help" = "인코딩으로 다시 열기 또는 현재 내용 변환";
+"status.encoding.a11y" = "인코딩 %@";
+"status.encoding.reopen" = "인코딩으로 다시 열기";
+"status.encoding.convert" = "변환";
+"menu.resetZoom.help" = "글꼴 크기를 14 pt로 재설정";
+
+/* v1.1 — Onboarding */
+"settings.help" = "도움말";
+"settings.showWelcomeAgain" = "시작 안내 다시 보기…";
+"menu.welcome" = "시작 안내…";
+"menu.whatsNew" = "새로운 기능…";
+"welcome.title" = "Notepad에 오신 것을 환영합니다";
+"welcome.subtitle" = "Windows 메모장에서 영감을 받은 macOS용 빠른 플레인 텍스트 편집기입니다.";
+"welcome.bullet.tabs" = "드래그 재정렬과 Ctrl+Tab을 지원하는 멀티 탭.";
+"welcome.bullet.session" = "세션 복원으로 저장하지 않은 내용도 재시작 후 유지.";
+"welcome.bullet.encoding" = "상태 표시줄에서 UTF-8, EUC-KR, UTF-16 등 인코딩 지원.";
+"welcome.bullet.spelling" = "선택적 맞춤법 검사와 자동 수정(시스템 사전).";
+"welcome.bullet.find" = "인라인 찾기/바꾸기, 인쇄, 줄로 이동.";
+"welcome.footer" = "AI 없음. 네트워크 없음. 계정 없음. 파일은 이 Mac에만 남습니다.";
+"welcome.getStarted" = "시작하기";
+"whatsNew.title" = "%@의 새로운 기능";
+"whatsNew.subtitle" = "이 버전의 플레인 텍스트 개선 사항:";
+"whatsNew.generic" = "버그 수정 및 소규모 개선.";
+"whatsNew.1_1.spell" = "밑줄과 제안이 있는 맞춤법 검사(시스템 사전).";
+"whatsNew.1_1.autocorrect" = "선택적 자동 수정(기본값 꺼짐).";
+"whatsNew.1_1.settings" = "코드/로그 확장자에서 맞춤법 검사 비활성화.";
+"whatsNew.1_1.onboarding" = "첫 실행 시 시작 안내, 업그레이드 시 새로운 기능.";
+"whatsNew.1_1.polish" = "글꼴 설정과 상태 표시줄 개선(줄 이동, 인코딩 메뉴).";

@@ -11,6 +11,8 @@ struct NotepadCommands: Commands {
     @AppStorage("wordWrap") private var wordWrap: Bool = false
     @AppStorage("fontSize") private var fontSize: Double = 14.0
     @AppStorage("isDarkMode") private var isDarkMode: Bool = false
+    @AppStorage(SpellingPreferences.spellCheckKey) private var spellCheckEnabled: Bool = SpellingPreferences.defaultSpellCheckEnabled
+    @AppStorage(SpellingPreferences.autoCorrectKey) private var autoCorrectEnabled: Bool = SpellingPreferences.defaultAutoCorrectEnabled
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
@@ -144,6 +146,17 @@ struct NotepadCommands: Commands {
             }
             .keyboardShortcut(KeyEquivalent(Character(UnicodeScalar(NSF5FunctionKey)!)), modifiers: [])
             .disabled(tabManager == nil)
+
+            Divider()
+
+            Toggle(isOn: $spellCheckEnabled) {
+                Label(String(localized: "menu.spellCheck"), systemImage: "text.badge.checkmark")
+            }
+
+            Toggle(isOn: $autoCorrectEnabled) {
+                Label(String(localized: "menu.autoCorrect"), systemImage: "textformat.abc.dottedunderline")
+            }
+            .disabled(!spellCheckEnabled)
         }
 
         CommandGroup(before: .sidebar) {
@@ -185,6 +198,7 @@ struct NotepadCommands: Commands {
                 Label(String(localized: "Reset Zoom"), systemImage: "magnifyingglass")
             }
             .keyboardShortcut("0", modifiers: .command)
+            .help(String(localized: "menu.resetZoom.help"))
 
             Divider()
 
@@ -238,6 +252,22 @@ struct NotepadCommands: Commands {
         }
 
         CommandGroup(replacing: .help) {
+            Button {
+                OnboardingPresenter.shared.request(.welcome)
+                OnboardingPresenter.activatePreferredEditorWindow()
+            } label: {
+                Label(String(localized: "menu.welcome"), systemImage: "hand.wave")
+            }
+
+            Button {
+                OnboardingPresenter.shared.request(.whatsNew)
+                OnboardingPresenter.activatePreferredEditorWindow()
+            } label: {
+                Label(String(localized: "menu.whatsNew"), systemImage: "sparkles")
+            }
+
+            Divider()
+
             Button {
                 var options: [NSApplication.AboutPanelOptionKey: Any] = [
                     .applicationName: String(localized: "Notepad for macOS"),

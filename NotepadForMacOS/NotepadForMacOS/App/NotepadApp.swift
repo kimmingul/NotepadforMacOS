@@ -6,6 +6,11 @@ struct NotepadApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @AppStorage("isDarkMode") private var isDarkMode: Bool = false
 
+    init() {
+        // Seed onboarding defaults before any window reads @AppStorage keys.
+        OnboardingMigration.applyIfNeeded()
+    }
+
     var body: some Scene {
         WindowGroup("Notepad", id: "editor", for: UUID.self) { windowID in
             NotepadWindowView(sessionID: windowID.wrappedValue)
@@ -22,21 +27,34 @@ struct NotepadApp: App {
         // .frame on the content, plus AppKit frame forcing (forceSettingsWindowSize).
         Settings {
             SettingsView()
-                .frame(minWidth: 400, idealWidth: 420, minHeight: 510, idealHeight: 570)
+                .frame(minWidth: 420, idealWidth: 440, minHeight: 640, idealHeight: 700)
                 .onAppear(perform: forceSettingsWindowSize)
                 .preferredColorScheme(isDarkMode ? .dark : .light)
         }
         .windowResizability(.contentSize)
-        .defaultSize(width: 420, height: 570)
+        .defaultSize(width: 440, height: 700)
     }
 }
 
 struct NotepadWindowView: View {
     @StateObject private var tabManager: TabManager
+    @ObservedObject private var onboardingPresenter = OnboardingPresenter.shared
+
     @AppStorage("isDarkMode") private var isDarkMode: Bool = false
+    @AppStorage(OnboardingState.hasSeenWelcomeKey) private var hasSeenWelcome: Bool = false
+    @AppStorage(OnboardingState.lastSeenWhatsNewVersionKey) private var lastSeenWhatsNewVersion: String = ""
+
+    @State private var showWelcome = false
+    @State private var showWhatsNew = false
+    /// Stable id so only one editor window claims a shared onboarding sheet.
+    @State private var presentationOwnerID = UUID()
 
     init(sessionID: UUID?) {
         _tabManager = StateObject(wrappedValue: TabManager(sessionID: sessionID))
+    }
+
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
     }
 
     var body: some View {
@@ -46,6 +64,37 @@ struct NotepadWindowView: View {
             .frame(minWidth: 600, minHeight: 400)
             .preferredColorScheme(isDarkMode ? .dark : .light)
             .navigationTitle(windowTitle)
+            .onAppear {
+                evaluateOnboarding()
+                claimPendingOnboardingSheet()
+            }
+            .onChange(of: onboardingPresenter.activeSheet) { _, _ in
+                claimPendingOnboardingSheet()
+            }
+            .sheet(isPresented: $showWelcome, onDismiss: {
+                hasSeenWelcome = true
+                // After first-run Welcome, record current version so What's New
+                // only appears on a later upgrade.
+                if lastSeenWhatsNewVersion.isEmpty {
+                    lastSeenWhatsNewVersion = appVersion
+                }
+                onboardingPresenter.dismiss(ownerID: presentationOwnerID)
+            }) {
+                WelcomeView {
+                    showWelcome = false
+                }
+            }
+            .sheet(isPresented: $showWhatsNew, onDismiss: {
+                lastSeenWhatsNewVersion = appVersion
+                onboardingPresenter.dismiss(ownerID: presentationOwnerID)
+            }) {
+                WhatsNewView(
+                    version: appVersion,
+                    bullets: OnboardingState.whatsNewBullets(for: appVersion)
+                ) {
+                    showWhatsNew = false
+                }
+            }
             .onDisappear {
                 NotepadTextInput.commitActiveComposition()
                 if AppDelegate.isTerminating {
@@ -54,6 +103,32 @@ struct NotepadWindowView: View {
                     tabManager.discardWindowSession()  // 창만 닫음 → 세션 디렉터리 정리
                 }
             }
+    }
+
+    private func evaluateOnboarding() {
+        // Only one window should auto-request onboarding per launch.
+        guard OnboardingCoordinator.claimAutoPresent() else { return }
+        if OnboardingState.shouldShowWelcome(hasSeenWelcome: hasSeenWelcome) {
+            onboardingPresenter.request(.welcome)
+            return
+        }
+        if OnboardingState.shouldShowWhatsNew(
+            currentVersion: appVersion,
+            lastSeenVersion: lastSeenWhatsNewVersion,
+            hasSeenWelcome: hasSeenWelcome
+        ) {
+            onboardingPresenter.request(.whatsNew)
+        }
+    }
+
+    private func claimPendingOnboardingSheet() {
+        guard let sheet = onboardingPresenter.claim(ownerID: presentationOwnerID) else { return }
+        switch sheet {
+        case .welcome:
+            showWelcome = true
+        case .whatsNew:
+            showWhatsNew = true
+        }
     }
 
     private var windowTitle: String {
@@ -87,11 +162,11 @@ private func forceSettingsWindowSize() {
             return isSettingsTitle && isNotMainEditor
         }) else { return }
 
-        let targetSize = NSSize(width: 420, height: 570)
+        let targetSize = NSSize(width: 440, height: 700)
         var newFrame = window.frame
         newFrame.size = targetSize
         window.setFrame(newFrame, display: true, animate: false)
         window.contentMinSize = targetSize
-        window.contentMaxSize = NSSize(width: 560, height: 690)
+        window.contentMaxSize = NSSize(width: 560, height: 900)
     }
 }
