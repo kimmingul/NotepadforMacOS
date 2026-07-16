@@ -96,6 +96,45 @@ Full matrix + results logged in ledger for G008.
 [ ] All menus/shortcuts (Cmd+S etc) functional
 [ ] No crashes on edge (empty, huge paste, rapid tab close)
 
+## 5. v1.1 Spelling / Onboarding / UX
+
+**Test 5.1 Spell check on/off**
+- Settings → Spell check on: type English typo → red underline; context menu suggestions.
+- Spell check off: no underlines.
+- Edit menu toggles match Settings.
+
+**Test 5.2 Autocorrect**
+- Autocorrect on (with spell check on): common English typo auto-corrects (system-dependent).
+- Autocorrect off: no automatic replacement.
+- Autocorrect disabled in UI when spell check is off.
+
+**Test 5.3 Extension disable list**
+- Open `foo.swift` (or any listed extension): no spell underlines even if global on.
+- Open `notes.txt` or Untitled: spell check follows global toggle.
+- Reset defaults restores default extension list.
+
+**Test 5.4 Font live apply**
+- Change default font / size in Settings → open tabs update without relaunch.
+- Zoom In/Out and Reset Zoom (14 pt) still work; status bar % updates.
+
+**Test 5.5 Status bar**
+- Click line/col → Go to Line sheet.
+- Narrow window: no broken layout; zoom / LE / encoding remain usable.
+- Encoding menu sections: Reopen vs Convert.
+
+**Test 5.6 Welcome / What's New**
+- Fresh defaults (`hasSeenWelcome` false): Welcome once; dismiss → no Welcome next launch.
+- Settings / Help → Show Welcome again: sheet appears **immediately** (while Settings is key), does **not** flip `hasSeenWelcome` to false for next launch.
+- Upgrade path (v1.0 install → 1.1.0): pre-v1.1 evidence seeds `hasSeenWelcome=true`, `lastSeen=1.0` → **What's New** (not Welcome) once; Help can re-open.
+- Fresh 1.1 install (no App Support / no legacy defaults): Welcome only, not What's New.
+
+**Test 5.7 Regression with spelling on**
+- Korean IME composition then Save: no character loss.
+- Find/replace undo still works.
+- Session restore multi-tab with spell check on.
+- Reopen EUC-KR / convert still works.
+- Print uses current font.
+
 ## Evidence Files
 - This TEST_MATRIX.md
 - Code comments + prior checkpoints

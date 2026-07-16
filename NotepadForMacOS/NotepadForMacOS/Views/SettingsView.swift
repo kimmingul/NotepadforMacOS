@@ -8,6 +8,10 @@ struct SettingsView: View {
     @AppStorage("wordWrap") private var wordWrapDefault: Bool = false
     @AppStorage("defaultEncodingRaw") private var defaultEncodingRaw: String = TextEncoding.utf8.rawValue
 
+    @AppStorage(SpellingPreferences.spellCheckKey) private var spellCheckEnabled: Bool = SpellingPreferences.defaultSpellCheckEnabled
+    @AppStorage(SpellingPreferences.autoCorrectKey) private var autoCorrectEnabled: Bool = SpellingPreferences.defaultAutoCorrectEnabled
+    @AppStorage(SpellingPreferences.disabledExtensionsKey) private var disabledExtensionsRaw: String = SpellingPreferences.defaultDisabledExtensionsRaw
+
     var body: some View {
         // We wrap everything in an explicit container so the view proposes
         // a stable intrinsic size to the Settings window / SwiftUI layout system.
@@ -39,6 +43,10 @@ struct SettingsView: View {
                         .labelsHidden()
                     }
 
+                    Text(String(localized: "settings.fontSize.caption"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
                     HStack {
                         Text(String(localized: "Default font"))
                         Spacer()
@@ -55,12 +63,51 @@ struct SettingsView: View {
                         .frame(width: 180)
                     }
 
+                    Text(String(localized: "settings.font.caption"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
                     Toggle("Word Wrap by default", isOn: $wordWrapDefault)
 
                     Picker("Default encoding for new tabs", selection: $defaultEncodingRaw) {
                         ForEach(TextEncoding.allCases) { enc in
                             Text(enc.displayName).tag(enc.rawValue)
                         }
+                    }
+                }
+
+                Section(String(localized: "settings.spelling")) {
+                    Toggle(String(localized: "settings.spellCheck"), isOn: $spellCheckEnabled)
+
+                    Toggle(String(localized: "settings.autoCorrect"), isOn: $autoCorrectEnabled)
+                        .disabled(!spellCheckEnabled)
+
+                    Text(String(localized: "settings.spelling.caption"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(String(localized: "settings.disabledExtensions"))
+                        TextEditor(text: $disabledExtensionsRaw)
+                            .font(.system(.body, design: .monospaced))
+                            .frame(minHeight: 54, maxHeight: 72)
+                            .disabled(!spellCheckEnabled)
+                        Text(String(localized: "settings.disabledExtensions.caption"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Button(String(localized: "settings.disabledExtensions.reset")) {
+                            disabledExtensionsRaw = SpellingPreferences.defaultDisabledExtensionsRaw
+                        }
+                        .disabled(!spellCheckEnabled || disabledExtensionsRaw == SpellingPreferences.defaultDisabledExtensionsRaw)
+                    }
+                }
+
+                Section(String(localized: "settings.help")) {
+                    Button(String(localized: "settings.showWelcomeAgain")) {
+                        // Do not flip hasSeenWelcome — just re-present. Presentation is
+                        // owned by OnboardingPresenter so Settings need not be the key window.
+                        OnboardingPresenter.shared.request(.welcome)
+                        OnboardingPresenter.activatePreferredEditorWindow()
                     }
                 }
 
@@ -87,6 +134,6 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.bottom, 8)
         }
-        .frame(minWidth: 400, minHeight: 510)
+        .frame(minWidth: 420, minHeight: 640)
     }
 }

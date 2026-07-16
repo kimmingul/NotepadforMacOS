@@ -76,6 +76,9 @@ struct EditorTextView: NSViewRepresentable {
     @AppStorage("fontSize") private var fontSize: Double = 14.0
     @AppStorage("defaultFontName") private var defaultFontName: String = ""
     @AppStorage("wordWrap") private var wordWrap: Bool = false
+    @AppStorage(SpellingPreferences.spellCheckKey) private var spellCheckEnabled: Bool = SpellingPreferences.defaultSpellCheckEnabled
+    @AppStorage(SpellingPreferences.autoCorrectKey) private var autoCorrectEnabled: Bool = SpellingPreferences.defaultAutoCorrectEnabled
+    @AppStorage(SpellingPreferences.disabledExtensionsKey) private var disabledExtensionsRaw: String = SpellingPreferences.defaultDisabledExtensionsRaw
 
     private var currentEditorFont: NSFont {
         let size = CGFloat(fontSize)
@@ -87,6 +90,16 @@ struct EditorTextView: NSViewRepresentable {
             if let font = NSFont(name: name, size: size) { return font }
         }
         return NSFont.monospacedSystemFont(ofSize: size, weight: .regular)
+    }
+
+    /// Spell check allowed for this tab (global toggle + optional extension exceptions).
+    private var spellingAllowedForDocument: Bool {
+        let fileURL = tabManager.document(with: documentID)?.fileURL
+        return SpellingPreferences.isSpellingAllowed(
+            fileURL: fileURL,
+            spellCheckEnabled: spellCheckEnabled,
+            disabledExtensionsRaw: disabledExtensionsRaw
+        )
     }
 
     func makeNSView(context: Context) -> NSScrollView {
@@ -115,13 +128,13 @@ struct EditorTextView: NSViewRepresentable {
         textView.isAutomaticQuoteSubstitutionEnabled = false
         textView.isAutomaticDashSubstitutionEnabled = false
         textView.isAutomaticTextReplacementEnabled = false
-        textView.isAutomaticSpellingCorrectionEnabled = false
         textView.font = currentEditorFont
         textView.textColor = .textColor
         textView.backgroundColor = .textBackgroundColor
         textView.delegate = context.coordinator
         textView.string = tabManager.document(with: documentID)?.content ?? ""
 
+        applySpelling(to: textView)
         applyWrap(to: textView, scrollView: scrollView)
         context.coordinator.textView = textView
 
@@ -138,8 +151,27 @@ struct EditorTextView: NSViewRepresentable {
         textView.textColor = .textColor
         textView.backgroundColor = .textBackgroundColor
         scrollView.backgroundColor = .textBackgroundColor
+        applySpelling(to: textView)
         applyWrap(to: textView, scrollView: scrollView)
         context.coordinator.handlePendingCommandIfNeeded()
+    }
+
+    /// Apply continuous spell check and optional autocorrect from AppStorage + file extension rules.
+    private func applySpelling(to textView: NSTextView) {
+        let allowed = spellingAllowedForDocument
+        let continuous = allowed
+        let autoCorrect = allowed && autoCorrectEnabled
+
+        if textView.isContinuousSpellCheckingEnabled != continuous {
+            textView.isContinuousSpellCheckingEnabled = continuous
+        }
+        if textView.isAutomaticSpellingCorrectionEnabled != autoCorrect {
+            textView.isAutomaticSpellingCorrectionEnabled = autoCorrect
+        }
+        // Grammar is out of scope; keep off for a lightweight plain-text feel.
+        if textView.isGrammarCheckingEnabled {
+            textView.isGrammarCheckingEnabled = false
+        }
     }
 
     private func applyWrap(to textView: NSTextView, scrollView: NSScrollView) {

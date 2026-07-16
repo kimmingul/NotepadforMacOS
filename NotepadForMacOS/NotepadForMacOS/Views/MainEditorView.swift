@@ -237,26 +237,56 @@ struct StatusBarView: View {
 
     @AppStorage("fontSize") private var fontSize: Double = 14.0
 
+    private var zoomPercent: Int {
+        Int((fontSize / 14.0 * 100).rounded())
+    }
+
+    private var cursorSummary: String {
+        String(
+            format: String(localized: "status.cursorFormat"),
+            tabManager.cursorLine,
+            tabManager.cursorCol,
+            document.content.count
+        )
+    }
+
     var body: some View {
-        HStack {
-            // 실시간 커서 위치 / 글자 수 (NSTextView 선택에서 갱신)
-            Text(String(format: String(localized: "status.cursorFormat"), tabManager.cursorLine, tabManager.cursorCol, document.content.count))
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
+        HStack(spacing: 8) {
+            // Click line/col to open Go to Line (Win11-style discoverability)
+            Button {
+                NotificationCenter.default.post(name: .showGoToLine, object: tabManager)
+            } label: {
+                Text(cursorSummary)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+            .buttonStyle(.plain)
+            .help(String(localized: "status.gotoLine.help"))
+            .accessibilityLabel(Text(cursorSummary))
+            .accessibilityHint(Text(String(localized: "status.gotoLine.help")))
+            .layoutPriority(1)
 
             if tabManager.selectionLength > 0 {
                 Text(String(format: String(localized: "status.selection"), tabManager.selectionLength))
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .accessibilityLabel(
+                        Text(String(format: String(localized: "status.selection"), tabManager.selectionLength))
+                    )
             }
 
-            Spacer()
+            Spacer(minLength: 8)
 
             // Right side items with more breathing room
-            HStack(spacing: 16) {
-                // Zoom level (styled same as encoding)
-                Text("\(Int(fontSize / 14.0 * 100))%")
+            HStack(spacing: 12) {
+                Text("\(zoomPercent)%")
                     .font(.system(size: 11, weight: .medium))
+                    .monospacedDigit()
+                    .help(String(localized: "status.zoom.help"))
+                    .accessibilityLabel(Text(String(format: String(localized: "status.zoom.a11y"), zoomPercent)))
 
                 // Line Ending
                 Menu {
@@ -268,36 +298,47 @@ struct StatusBarView: View {
                 } label: {
                     Text(document.statusLineEnding)
                         .font(.system(size: 11, weight: .medium))
+                        .lineLimit(1)
                 }
                 .menuStyle(.borderlessButton)
+                .fixedSize()
                 .help(String(localized: "Change line ending for this tab (affects next Save)"))
+                .accessibilityLabel(Text(String(format: String(localized: "status.lineEnding.a11y"), document.statusLineEnding)))
 
-                // Encoding
+                // Encoding: reopen vs convert clearly labeled
                 Menu {
-                    ForEach(TextEncoding.allCases) { enc in
-                        Button(enc.displayName) {
-                            tabManager.reopenSelectedWithEncoding(enc)
+                    Section(String(localized: "status.encoding.reopen")) {
+                        ForEach(TextEncoding.allCases) { enc in
+                            Button(enc.displayName) {
+                                tabManager.reopenSelectedWithEncoding(enc)
+                            }
                         }
                     }
 
-                    Divider()
-
-                    ForEach(TextEncoding.allCases) { enc in
-                        Button(String(format: String(localized: "Convert to %@"), enc.displayName)) {
-                            if !tabManager.convertSelectedToEncoding(enc) {
-                                Self.warnLossyConversion(to: enc)
+                    Section(String(localized: "status.encoding.convert")) {
+                        ForEach(TextEncoding.allCases) { enc in
+                            Button(String(format: String(localized: "Convert to %@"), enc.displayName)) {
+                                if !tabManager.convertSelectedToEncoding(enc) {
+                                    Self.warnLossyConversion(to: enc)
+                                }
                             }
                         }
                     }
                 } label: {
                     Text(document.statusEncoding)
                         .font(.system(size: 11, weight: .medium))
+                        .lineLimit(1)
                 }
                 .menuStyle(.borderlessButton)
+                .fixedSize()
+                .help(String(localized: "status.encoding.help"))
+                .accessibilityLabel(Text(String(format: String(localized: "status.encoding.a11y"), document.statusEncoding)))
             }
+            .layoutPriority(2)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 3)
+        .frame(minHeight: 22)
         .background(Color(NSColor.windowBackgroundColor))
         .overlay(Divider(), alignment: .top)
     }
