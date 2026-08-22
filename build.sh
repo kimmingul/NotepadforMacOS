@@ -254,13 +254,23 @@ do_dist() {
   rm -rf "$staging"
   success "Created $dmg_path"
 
-  # Notarize (optional) — needs $NOTARY_PROFILE stored via `xcrun notarytool store-credentials`
   if [[ -n "${DEVID_APP:-}" && -n "${NOTARY_PROFILE:-}" ]]; then
     info "Submitting for notarization (profile: $NOTARY_PROFILE)..."
     xcrun notarytool submit "$dmg_path" --keychain-profile "$NOTARY_PROFILE" --wait
-    info "Stapling ticket..."
+    # Finder “Open With” assesses the .app, not the DMG. A ticket only on the
+    # disk image leaves other Macs able to launch the app but blocked when
+    # Launch Services starts it as a document handler.
+    info "Stapling ticket to app, then rebuilding and notarizing the DMG..."
+    xcrun stapler staple "$app_path"
+    rm -f "$dmg_path"
+    rm -rf "$staging"; mkdir -p "$staging"
+    cp -R "$app_path" "$staging/"
+    ln -s /Applications "$staging/Applications"
+    hdiutil create -volname "Notepad" -srcfolder "$staging" -ov -format UDZO "$dmg_path" >/dev/null
+    rm -rf "$staging"
+    xcrun notarytool submit "$dmg_path" --keychain-profile "$NOTARY_PROFILE" --wait
     xcrun stapler staple "$dmg_path"
-    success "Notarized + stapled: $dmg_path"
+    success "Notarized + stapled app and DMG: $dmg_path"
   else
     echo ""
     echo "To produce a Gatekeeper-friendly build, set:"

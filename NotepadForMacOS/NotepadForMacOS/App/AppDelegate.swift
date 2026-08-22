@@ -23,6 +23,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ExternalDocumentOpener.enqueue(urls)
     }
 
+    // Older Launch Services “Open With” path. Without this, Finder can
+    // re-assess a quarantined app and show Gatekeeper instead of handing
+    // the file to the already-running process.
+    func application(_ sender: NSApplication, openFile filename: String) -> Bool {
+        ExternalDocumentOpener.enqueue([URL(fileURLWithPath: filename)])
+        return true
+    }
+
+    func application(_ sender: NSApplication, openFiles filenames: [String]) {
+        ExternalDocumentOpener.enqueue(filenames.map { URL(fileURLWithPath: $0) })
+        sender.reply(toOpenOrPrint: .success)
+    }
+
 }
 
 /// 진행 중인 입력기(IME) 조합 텍스트를 강제로 커밋하기 위한 도우미.

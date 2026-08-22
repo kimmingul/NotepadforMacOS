@@ -21,6 +21,8 @@
 		<string>pl</string>
 		<string>nl</string>
 	</array>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
