@@ -161,6 +161,9 @@
 "whatsNew.1_2_3.relaunch" = "Changing the language relaunches Notepad.";
 "whatsNew.1_2_4.openWith" = "Finder Open With and “always open with” no longer quit the app before the file is delivered.";
 "whatsNew.1_2_4.defaultApp" = "The installed app now carries its own notarization ticket for document launches.";
+"whatsNew.1_2_5.install" = "Install by dragging to Applications, then eject the disk image.";
+"whatsNew.1_2_5.openWith" = "Always Open With now binds to the Applications copy, not the DMG.";
+
 
 
 
