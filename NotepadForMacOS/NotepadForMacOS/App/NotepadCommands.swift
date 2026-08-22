@@ -5,7 +5,7 @@ import AppKit
 struct NotepadCommands: Commands {
     @Environment(\.openWindow) private var openWindow
     @FocusedObject private var tabManager: TabManager?
-
+    @FocusedObject private var preview: MarkdownPreviewController?
     @AppStorage("showStatusBar") private var showStatusBar: Bool = true
     @AppStorage("showTabBar") private var showTabBar: Bool = true
     @AppStorage("wordWrap") private var wordWrap: Bool = false
@@ -169,6 +169,34 @@ struct NotepadCommands: Commands {
                 )
             }
             .keyboardShortcut("w", modifiers: [.command, .shift])
+
+            Divider()
+
+            Button {
+                preview?.toggleSide()
+            } label: {
+                Label(
+                    preview?.layout == .side
+                        ? String(localized: "markdown.hide")
+                        : String(localized: "markdown.preview"),
+                    systemImage: "sidebar.right"
+                )
+            }
+            .keyboardShortcut("p", modifiers: [.command, .option])
+            .disabled(!PreviewDocumentKind.isPreviewable(fileURL: tabManager?.selectedTab?.fileURL))
+
+            Button {
+                preview?.toggleFull()
+            } label: {
+                Label(
+                    preview?.layout == .full
+                        ? String(localized: "markdown.exitFull")
+                        : String(localized: "markdown.full"),
+                    systemImage: "arrow.up.left.and.arrow.down.right"
+                )
+            }
+            .keyboardShortcut(.return, modifiers: [.command, .option])
+            .disabled(!PreviewDocumentKind.isPreviewable(fileURL: tabManager?.selectedTab?.fileURL))
 
             Divider()
 

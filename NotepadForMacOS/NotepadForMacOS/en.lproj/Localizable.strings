@@ -133,13 +133,39 @@
 "welcome.bullet.encoding" = "UTF-8, EUC-KR, UTF-16 and more from the status bar.";
 "welcome.bullet.spelling" = "Optional spell check and autocorrect (system dictionary).";
 "welcome.bullet.find" = "Inline find/replace, print, and go to line.";
-"welcome.footer" = "No AI. No network. No account. Your files stay on this Mac.";
+"welcome.footer" = "No AI. No account. Files stay on this Mac. Network is used only if you allow remote images or CSS in a Markdown or HTML preview.";
 "welcome.getStarted" = "Get Started";
 "whatsNew.title" = "What's New in %@";
-"whatsNew.subtitle" = "Plain-text improvements in this release:";
+"whatsNew.subtitle" = "What's new in this release:";
 "whatsNew.generic" = "Bug fixes and small improvements.";
 "whatsNew.1_1.spell" = "Spell check with underlines and suggestions (system dictionary).";
 "whatsNew.1_1.autocorrect" = "Optional autocorrect, off by default.";
 "whatsNew.1_1.settings" = "Disable spelling for code/log file extensions.";
 "whatsNew.1_1.onboarding" = "Welcome on first launch and What's New on upgrades.";
 "whatsNew.1_1.polish" = "Clearer font settings and status bar (go to line, encoding menus).";
+"whatsNew.1_2.preview" = "Optional side or full-screen preview for .md and .html — source stays plain text.";
+"whatsNew.1_2.highlight" = "Source highlight for Markdown, JSON, XML, HTML, and logs.";
+"whatsNew.1_2.remote" = "Remote images and CSS load only after you allow them for that tab. Scripts never run.";
+"whatsNew.1_2.browser" = "Open the current file in your default browser.";
+"whatsNew.1_2.toggle" = "The preview button stays visible next to + and appearance while the pane is open.";
+
+
+/* Markdown preview */
+"markdown.preview" = "Preview";
+"markdown.hide" = "Hide Preview";
+"markdown.full" = "Full Screen Preview";
+"markdown.exitFull" = "Exit Full Screen Preview";
+"markdown.preview.help" = "Show or hide the Markdown preview";
+"markdown.remoteAllow" = "Allow Remote Images";
+"markdown.remoteOn" = "Block Remote Images";
+"markdown.remote.help" = "Load https images for this tab only. Closes with the tab.";
+"markdown.remoteBlocked" = "Remote image blocked — allow remote images in the preview header.";
+"markdown.folderAllow" = "Allow Folder Access";
+"markdown.folder.help" = "Grant access to this document’s folder so local images can be shown.";
+"html.remoteAllow" = "Allow Remote Images & CSS";
+"html.remoteOn" = "Block Remote Images & CSS";
+"html.remote.help" = "Load https images and stylesheets for this tab only. Closes with the tab.";
+"html.folder.help" = "Grant access to this document’s folder so local images and CSS can be shown.";
+"preview.browser.help" = "Open this file in the default browser";
+"preview.browser.saveFirst" = "Save the file first to open it in a browser";
+

@@ -11,6 +11,8 @@ import AppKit
 /// "붙여넣을 때만 맨 앞으로" 동작을 안전하게 구현할 수 있다.
 final class NotepadTextView: NSTextView {
     private var didAlignInitialScroll = false
+    var onOpenDroppedFiles: (([URL]) -> Void)?
+
 
     /// 탭 복귀(.id로 뷰 재생성) 시 가로 스크롤이 여백폭만큼 밀려 첫 글자가 좌측
     /// 테두리에 붙던 문제를, 화면이 그려지기 **직전**에 동기로 바로잡는다.
@@ -59,6 +61,34 @@ final class NotepadTextView: NSTextView {
         super.pasteAsPlainText(sender)
         revealPasteStart(from: insertLoc)
     }
+
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        if droppedOpenableFiles(from: sender) != nil { return .copy }
+        return super.draggingEntered(sender)
+    }
+
+    override func prepareForDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        if droppedOpenableFiles(from: sender) != nil { return true }
+        return super.prepareForDragOperation(sender)
+    }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        if let urls = droppedOpenableFiles(from: sender) {
+            onOpenDroppedFiles?(urls)
+            return true
+        }
+        return super.performDragOperation(sender)
+    }
+
+    private func droppedOpenableFiles(from sender: NSDraggingInfo) -> [URL]? {
+        let options: [NSPasteboard.ReadingOptionKey: Any] = [.urlReadingFileURLsOnly: true]
+        guard let urls = sender.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: options) as? [URL] else {
+            return nil
+        }
+        let openable = OpenableDocumentType.openableURLs(in: urls)
+        return openable.isEmpty ? nil : openable
+    }
+
 }
 
 /// NSTextView 기반 에디터.
@@ -137,6 +167,15 @@ struct EditorTextView: NSViewRepresentable {
         applySpelling(to: textView)
         applyWrap(to: textView, scrollView: scrollView)
         context.coordinator.textView = textView
+        textView.registerForDraggedTypes([.fileURL])
+        textView.onOpenDroppedFiles = { [tabManager] urls in
+            ExternalDocumentOpener.openNow(urls, in: tabManager)
+        }
+
+        SourceHighlighter.apply(
+            to: textView,
+            kind: SourceHighlightKind.of(fileURL: tabManager.document(with: documentID)?.fileURL)
+        )
 
         // 초기 커서를 맨 앞으로. 가로 정렬(x=0)은 깜박임 없이 첫 그리기 직전에
         // NotepadTextView.viewWillDraw()가 동기로 수행한다.
@@ -153,6 +192,10 @@ struct EditorTextView: NSViewRepresentable {
         scrollView.backgroundColor = .textBackgroundColor
         applySpelling(to: textView)
         applyWrap(to: textView, scrollView: scrollView)
+        SourceHighlighter.apply(
+            to: textView,
+            kind: SourceHighlightKind.of(fileURL: tabManager.document(with: documentID)?.fileURL)
+        )
         context.coordinator.handlePendingCommandIfNeeded()
     }
 
@@ -214,6 +257,10 @@ struct EditorTextView: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             tabManager?.updateContent(for: documentID, newContent: textView.string)
+            SourceHighlighter.apply(
+                to: textView,
+                kind: SourceHighlightKind.of(fileURL: tabManager?.document(with: documentID)?.fileURL)
+            )
         }
 
         func textViewDidChangeSelection(_ notification: Notification) {

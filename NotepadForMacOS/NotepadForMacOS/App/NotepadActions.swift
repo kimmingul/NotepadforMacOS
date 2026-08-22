@@ -11,7 +11,12 @@ enum NotepadDocumentActions {
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
-        panel.allowedContentTypes = [.plainText, .text]
+        var types: [UTType] = [.plainText, .text, .json, .xml, .html]
+        if let markdown = UTType(filenameExtension: "md") { types.append(markdown) }
+        if let markdown = UTType(filenameExtension: "markdown") { types.append(markdown) }
+        if let log = UTType(filenameExtension: "log") { types.append(log) }
+        panel.allowedContentTypes = types
+
 
         guard panel.runModal() == .OK, let url = panel.url else { return false }
         return tabManager.openFile(url: url, preferredEncoding: preferredEncoding)
@@ -157,6 +162,20 @@ enum NotepadDocumentActions {
         alert.addButton(withTitle: String(localized: "Save"))
         alert.addButton(withTitle: String(localized: "Cancel"))
         return alert.runModal() == .alertFirstButtonReturn
+    }
+
+    static func grantMarkdownFolderAccess(for id: UUID, in tabManager: TabManager) {
+        guard let doc = tabManager.document(with: id), let fileURL = doc.fileURL else { return }
+        let folder = fileURL.deletingLastPathComponent()
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.directoryURL = folder
+        panel.prompt = String(localized: "markdown.folderAllow")
+        panel.message = String(localized: "markdown.folder.help")
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        tabManager.setDirectoryBookmark(SecurityScopedFile.makeBookmark(for: url), for: id)
     }
 
     private enum UnsavedCloseChoice {

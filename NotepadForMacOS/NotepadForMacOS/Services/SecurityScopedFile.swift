@@ -5,7 +5,7 @@ import Foundation
 /// - 파일을 열거나 저장할 때 `makeBookmark(for:)`로 앱 스코프 북마크를 만들어 세션에 저장한다.
 /// - 재실행 후에는 `access(_:bookmark:)`로 북마크에서 URL을 해석하고 보안 스코프 접근을
 ///   연 상태에서만 읽기/쓰기를 수행한 뒤 접근을 해제한다.
-enum SecurityScopedFile {
+nonisolated enum SecurityScopedFile {
 
     /// 가능하면 북마크에서 URL을 해석해 보안 스코프 접근을 연 뒤 `body`를 실행하고,
     /// 작업이 끝나면 접근을 해제한다. 북마크가 없으면(같은 실행 세션에서 막 선택한 파일 등)

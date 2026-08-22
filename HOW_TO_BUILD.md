@@ -29,10 +29,10 @@ Xcode에서 작업하려면 `NotepadForMacOS/NotepadForMacOS.xcodeproj`를 열�
 ```
 NotepadForMacOS/NotepadForMacOS/
   App/         # @main, AppDelegate, 메뉴 명령, 문서 동작
-  Models/      # Document, LineEnding, TextEncoding
+  Models/      # Document, LineEnding, TextEncoding, PreviewDocumentKind
   ViewModels/  # TabManager
-  Services/    # SessionStore, SecurityScopedFile
-  Views/       # 에디터/탭/상태바/시트/설정 뷰
+  Services/    # SessionStore, Markdown/HTML preview renderer + sanitizer
+  Views/       # 에디터/탭/상태바/미리보기/시트/설정 뷰
   Assets.xcassets, en.lproj, ko.lproj, Credits.rtf, LICENSE
 ```
 
@@ -44,6 +44,7 @@ NotepadForMacOS/NotepadForMacOS/
 - `com.apple.security.app-sandbox`
 - `com.apple.security.files.user-selected.read-write` — 사용자가 연 파일에 저장 허용
 - `com.apple.security.files.bookmarks.app-scope` — 재실행 후 접근을 위한 보안 스코프 북마크
+- `com.apple.security.network.client` — 미리보기에서 원격 이미지/CSS를 **그 탭에서 허용한 뒤에만** 나가는 연결. 기본 동작은 로컬 전용.
 
 Release는 `ENABLE_HARDENED_RUNTIME=YES`, `CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO`로 빌드되어 `get-task-allow`가 포함되지 않습니다(배포 적합).
 

@@ -18,6 +18,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         true
     }
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        ExternalDocumentOpener.enqueue(urls)
+    }
+
 }
 
 /// 진행 중인 입력기(IME) 조합 텍스트를 강제로 커밋하기 위한 도우미.

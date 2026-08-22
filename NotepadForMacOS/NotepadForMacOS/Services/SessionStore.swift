@@ -119,6 +119,7 @@ final class SessionStore: ObservableObject {
             ]
             if let path = tab.filePath { info["filePath"] = path }
             if let bookmark = tab.bookmark { info["bookmark"] = bookmark.base64EncodedString() }
+            if let dirBookmark = tab.directoryBookmark { info["directoryBookmark"] = dirBookmark.base64EncodedString() }
 
             let contentURL = dir.appendingPathComponent("\(tab.id.uuidString).txt")
             if tab.writeContent {
@@ -171,9 +172,10 @@ final class SessionStore: ObservableObject {
             let lineEnding = LineEnding(rawValue: info["lineEnding"] as? String ?? "") ?? .lf
             let savedDirty = info["isDirty"] as? Bool ?? false
             let hasContentFile = info["hasContentFile"] as? Bool ?? false
-
             var bookmark: Data?
             if let b64 = info["bookmark"] as? String { bookmark = Data(base64Encoded: b64) }
+            var directoryBookmark: Data?
+            if let b64 = info["directoryBookmark"] as? String { directoryBookmark = Data(base64Encoded: b64) }
 
             var fileURL: URL?
             if let path = info["filePath"] as? String { fileURL = URL(fileURLWithPath: path) }
@@ -212,6 +214,7 @@ final class SessionStore: ObservableObject {
             var doc = Document(
                 fileURL: fileURL,
                 securityScopedBookmark: bookmark,
+                directoryBookmark: directoryBookmark,
                 content: content,
                 encoding: encoding,
                 lineEnding: lineEnding,
@@ -309,6 +312,7 @@ private struct TabSnapshot: Sendable {
     let id: UUID
     let filePath: String?
     let bookmark: Data?
+    let directoryBookmark: Data?
     let encoding: String
     let lineEnding: String
     let isDirty: Bool
@@ -320,6 +324,7 @@ private struct TabSnapshot: Sendable {
         id = doc.id
         filePath = doc.fileURL?.path
         bookmark = doc.securityScopedBookmark
+        directoryBookmark = doc.directoryBookmark
         encoding = doc.encoding.rawValue
         lineEnding = doc.lineEnding.rawValue
         isDirty = doc.isDirty

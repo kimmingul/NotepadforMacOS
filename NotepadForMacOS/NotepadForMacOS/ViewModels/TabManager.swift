@@ -195,6 +195,12 @@ final class TabManager: ObservableObject {
         }
     }
 
+    func setDirectoryBookmark(_ data: Data?, for id: UUID) {
+        guard let index = tabs.firstIndex(where: { $0.id == id }) else { return }
+        tabs[index].directoryBookmark = data
+        persistSession()
+    }
+
     // MARK: - File Operations
 
     @discardableResult

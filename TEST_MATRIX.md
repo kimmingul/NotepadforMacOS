@@ -126,7 +126,8 @@ Full matrix + results logged in ledger for G008.
 - Fresh defaults (`hasSeenWelcome` false): Welcome once; dismiss → no Welcome next launch.
 - Settings / Help → Show Welcome again: sheet appears **immediately** (while Settings is key), does **not** flip `hasSeenWelcome` to false for next launch.
 - Upgrade path (v1.0 install → 1.1.0): pre-v1.1 evidence seeds `hasSeenWelcome=true`, `lastSeen=1.0` → **What's New** (not Welcome) once; Help can re-open.
-- Fresh 1.1 install (no App Support / no legacy defaults): Welcome only, not What's New.
+- Upgrade path (v1.1.0 → 1.2.0): `lastSeen=1.1.0` → **What's New** with five 1.2 bullets (preview, highlight, remote, browser, toggle).
+- Fresh 1.2 install (no App Support / no legacy defaults): Welcome only, not What's New.
 
 **Test 5.7 Regression with spelling on**
 - Korean IME composition then Save: no character loss.
@@ -134,6 +135,36 @@ Full matrix + results logged in ledger for G008.
 - Session restore multi-tab with spell check on.
 - Reopen EUC-KR / convert still works.
 - Print uses current font.
+
+## 6. Markdown / HTML preview (v1.2)
+
+**Test 6.1 Default closed**
+- Open `note.md` or `page.html`: full-width editor, no preview pane.
+- Untitled / `.txt`: no preview chrome in tab bar or status bar.
+
+**Test 6.2 Side preview**
+- View → Preview (`⌘⌥P`), tab-bar sidebar icon, or status bar **미리보기**: right pane opens, updates while typing.
+- Korean IME composition: preview does not flicker mid-composition.
+- Tab bar stays full window width. After open, `+` / preview / appearance remain visible; preview icon is the same `sidebar.right` glyph (not an invisible fill). Clicking it hides the pane.
+
+**Test 6.3 Full screen**
+- `⌘⌥↩`: editor hidden, preview only, cannot type in source.
+- `Esc` or same shortcut: previous layout restored.
+
+**Test 6.4 Images and HTML safety**
+- Local `![](./x.png)`: after Allow Folder Access, image shows.
+- `![](../outside.png)`: never shown.
+- Remote `![](https://…)`: placeholder until Allow Remote Images; then loads; close tab and reopen → blocked again.
+- HTML: `<script>`, `javascript:`, `onclick`, remote `<img>` / `<link rel=stylesheet>` blocked until allow; then images/CSS only, still no script.
+- WebView does not navigate to `https://` directly.
+
+**Test 6.5 Browser**
+- Preview header Safari button: saved file opens in default browser; unsaved stays disabled.
+
+**Test 6.6 Regression**
+- `.txt` has no preview chrome.
+- Session restore, encodings, find/replace, spell check unchanged.
+
 
 ## Evidence Files
 - This TEST_MATRIX.md
