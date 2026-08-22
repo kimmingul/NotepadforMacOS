@@ -291,6 +291,43 @@
       font-weight: 500;
     }
 
+    .whats-new {
+      border-radius: 28px;
+      background: var(--surface);
+      padding: 36px 40px;
+    }
+
+    .whats-new h2 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 3.2vw, 40px);
+      line-height: 1.1;
+    }
+
+    .whats-new .lede {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .whats-new ul {
+      margin: 0;
+      padding: 0 0 0 1.15em;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.5;
+      font-weight: 500;
+    }
+
+    .whats-new li + li {
+      margin-top: 8px;
+    }
+
+    .whats-new a {
+      color: inherit;
+    }
+
+
     .showcase {
       display: grid;
       grid-template-columns: minmax(0, .8fr) minmax(480px, 1.2fr);
@@ -424,6 +461,10 @@
         grid-template-columns: 1fr;
       }
 
+      .whats-new {
+        padding: 28px 24px;
+      }
+
       .privacy {
         padding: 34px 28px;
       }
@@ -491,6 +532,7 @@
         <span>Notepad Classic</span>
       </a>
       <div class="nav-links">
+        <a href="#whats-new">What's New</a>
         <a href="#features">Features</a>
         <a href="#privacy">Privacy</a>
         <a href="#download" class="button">Get the app</a>
@@ -525,6 +567,22 @@
         </div>
       </div>
     </section>
+
+    <section id="whats-new" class="section">
+      <div class="section-inner">
+        <div class="whats-new">
+          <h2>What's new in v1.2</h2>
+          <p class="lede">Optional preview. Source stays plain text. <a href="https://github.com/kimmingul/NotepadforMacOS/releases/tag/v1.2.0">Release notes</a></p>
+          <ul>
+            <li>Side or full-screen preview for <code>.md</code> and <code>.html</code> — off by default.</li>
+            <li>Source highlight for Markdown, JSON, XML, HTML, and logs.</li>
+            <li>Remote images and CSS only after you allow them for that tab. Scripts never run.</li>
+            <li>Open the current file in your default browser.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
 
     <section id="features" class="section">
       <div class="section-inner">
