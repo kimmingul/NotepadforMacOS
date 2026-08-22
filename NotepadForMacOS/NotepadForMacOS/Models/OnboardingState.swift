@@ -129,6 +129,12 @@ enum OnboardingState {
     /// Feature bullets for a marketing version (local, offline).
     static func whatsNewBullets(for version: String) -> [String] {
         switch version {
+        case "1.2.4":
+            return [
+                String(localized: "whatsNew.1_2_4.openWith"),
+                String(localized: "whatsNew.1_2_4.defaultApp"),
+            ]
+
         case "1.2.3":
             return [
                 String(localized: "whatsNew.1_2_3.languages"),

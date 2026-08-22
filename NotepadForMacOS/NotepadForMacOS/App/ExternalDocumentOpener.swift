@@ -11,6 +11,8 @@ enum ExternalDocumentOpener {
     private static weak var active: TabManager?
     private static var pending: [URL] = []
 
+    static var hasPending: Bool { !pending.isEmpty }
+
     static func activate(_ tabManager: TabManager) {
         active = tabManager
         flush()

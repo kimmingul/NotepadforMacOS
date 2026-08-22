@@ -15,11 +15,18 @@ struct NotepadApp: App {
     }
 
     var body: some Scene {
-        WindowGroup("Notepad", id: "editor", for: UUID.self) { windowID in
-            NotepadWindowView(sessionID: windowID.wrappedValue)
+        WindowGroup {
+            NotepadWindowView(sessionID: nil)
+                .onOpenURL { url in
+                    ExternalDocumentOpener.enqueue([url])
+                }
         }
         .commands {
             NotepadCommands()
+        }
+
+        WindowGroup(id: "editor", for: UUID.self) { windowID in
+            NotepadWindowView(sessionID: windowID.wrappedValue)
         }
 
         // === Settings window sizing notes ===
