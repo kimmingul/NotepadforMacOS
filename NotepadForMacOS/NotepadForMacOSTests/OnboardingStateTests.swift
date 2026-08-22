@@ -72,6 +72,12 @@ final class OnboardingStateTests: XCTestCase {
         XCTAssertFalse(bullets.contains { $0.isEmpty })
     }
 
+    func testWhatsNewBulletsFor126() {
+        let bullets = OnboardingState.whatsNewBullets(for: "1.2.6")
+        XCTAssertEqual(bullets.count, 2)
+        XCTAssertFalse(bullets.contains { $0.isEmpty })
+    }
+
     func testWhatsNewBulletsFor125() {
         let bullets = OnboardingState.whatsNewBullets(for: "1.2.5")
         XCTAssertEqual(bullets.count, 2)
