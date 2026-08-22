@@ -116,15 +116,14 @@ notepad,plain text,text editor,txt,tabs,session,restore,privacy,offline,spell,en
 
 ---
 
-## What's New (4000) — v1.2.2
+## What's New (4000) — v1.2.3
 
 ```
-Safer optional preview for Markdown and HTML. Still a plain-text editor.
+16 UI languages. Still a plain-text editor.
 
-• HTML preview rebuilt from a tag allowlist; scripts never run
-• Preview images use a private scheme only
-• Remote assets: public HTTPS, no private networks, 8 MB cap
-• Folder bookmarks refresh after a move or reboot
+• Settings → Language: follow this Mac or pin a language
+• English, Korean, Japanese, Chinese (Simplified/Traditional), and 11 more
+• Changing the language relaunches Notepad
 
 No AI. No accounts. Network only for allowed preview resources.
 ```

@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage(SpellingPreferences.spellCheckKey) private var spellCheckEnabled: Bool = SpellingPreferences.defaultSpellCheckEnabled
     @AppStorage(SpellingPreferences.autoCorrectKey) private var autoCorrectEnabled: Bool = SpellingPreferences.defaultAutoCorrectEnabled
     @AppStorage(SpellingPreferences.disabledExtensionsKey) private var disabledExtensionsRaw: String = SpellingPreferences.defaultDisabledExtensionsRaw
+    @AppStorage(AppLanguagePreferences.languageKey) private var languageRaw: String = AppLanguage.system.rawValue
 
     var body: some View {
         // We wrap everything in an explicit container so the view proposes
@@ -19,20 +20,33 @@ struct SettingsView: View {
         // makes width/height changes actually take effect.
         VStack(spacing: 0) {
             Form {
+                Section(String(localized: "settings.language")) {
+                    Picker(selection: languageBinding) {
+                        ForEach(AppLanguage.allCases) { language in
+                            Text(language.nativeDisplayName).tag(language.rawValue)
+                        }
+                    } label: {
+                        Text(String(localized: "settings.language"))
+                    }
+                    Text(String(localized: "settings.language.caption"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
                 Section(String(localized: "When Notepad starts")) {
-                    Toggle("Continue previous session (restore tabs and unsaved content)", isOn: Binding(
+                    Toggle(String(localized: "Continue previous session (restore tabs and unsaved content)"), isOn: Binding(
                         get: { sessionStore.shouldRestorePreviousSession },
                         set: { sessionStore.setRestorePreviousSession($0) }
                     ))
 
-                    Text("Works like Windows 11 Notepad. When off, the app always starts with a new tab.")
+                    Text(String(localized: "Works like Windows 11 Notepad. When off, the app always starts with a new tab."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
                 Section(String(localized: "Editor")) {
                     HStack {
-                        Text("Default font size")
+                        Text(String(localized: "Default font size"))
                         Spacer()
                         Text(String(format: String(localized: "fontSize.points"), Int(fontSize)))
                             .monospacedDigit()
@@ -67,9 +81,9 @@ struct SettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    Toggle("Word Wrap by default", isOn: $wordWrapDefault)
+                    Toggle(String(localized: "Word Wrap by default"), isOn: $wordWrapDefault)
 
-                    Picker("Default encoding for new tabs", selection: $defaultEncodingRaw) {
+                    Picker(String(localized: "Default encoding for new tabs"), selection: $defaultEncodingRaw) {
                         ForEach(TextEncoding.allCases) { enc in
                             Text(enc.displayName).tag(enc.rawValue)
                         }
@@ -112,13 +126,13 @@ struct SettingsView: View {
                 }
 
                 Section(String(localized: "Session")) {
-                    Button("Start New Session (discard current unsaved tabs)") {
+                    Button(String(localized: "Start New Session (discard current unsaved tabs)")) {
                         sessionStore.clearAllSessions()
                         NotificationCenter.default.post(name: .startNewSessionRequested, object: nil)
                     }
                     .foregroundStyle(.red)
 
-                    Text("Restored tabs and temporary content will be removed.")
+                    Text(String(localized: "Restored tabs and temporary content will be removed."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -128,12 +142,27 @@ struct SettingsView: View {
             .padding(.bottom, 4)
 
             // Footer
-            Text("Notepad for macOS • Apple Silicon • Plain text only")
+            Text(String(localized: "Notepad for macOS • Apple Silicon • Plain text only"))
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
                 .frame(maxWidth: .infinity)
                 .padding(.bottom, 8)
         }
-        .frame(minWidth: 420, minHeight: 640)
+        .frame(minWidth: 420, minHeight: 700)
     }
+
+
+    private var languageBinding: Binding<String> {
+        Binding(
+            get: { languageRaw },
+            set: { newValue in
+                let previous = languageRaw
+                guard newValue != previous else { return }
+                languageRaw = newValue
+                AppLanguagePreferences.apply(AppLanguagePreferences.parse(newValue), to: .standard)
+                AppRelauncher.confirmAndRelaunch()
+            }
+        )
+    }
+
 }

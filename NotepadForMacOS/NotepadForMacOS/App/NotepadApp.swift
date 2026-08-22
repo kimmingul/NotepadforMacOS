@@ -7,6 +7,9 @@ struct NotepadApp: App {
     @AppStorage("isDarkMode") private var isDarkMode: Bool = false
 
     init() {
+        // AppleLanguages is read at process start; this keeps the stored
+        // preference and the override in sync for the *next* launch.
+        AppLanguagePreferences.applyStored()
         // Seed onboarding defaults before any window reads @AppStorage keys.
         OnboardingMigration.applyIfNeeded()
     }
@@ -27,12 +30,12 @@ struct NotepadApp: App {
         // .frame on the content, plus AppKit frame forcing (forceSettingsWindowSize).
         Settings {
             SettingsView()
-                .frame(minWidth: 420, idealWidth: 440, minHeight: 640, idealHeight: 700)
+                .frame(minWidth: 420, idealWidth: 440, minHeight: 700, idealHeight: 760)
                 .onAppear(perform: forceSettingsWindowSize)
                 .preferredColorScheme(isDarkMode ? .dark : .light)
         }
         .windowResizability(.contentSize)
-        .defaultSize(width: 440, height: 700)
+        .defaultSize(width: 440, height: 760)
     }
 }
 
@@ -165,19 +168,13 @@ extension Notification.Name {
 /// Force the Settings (Preferences) window to a specific size.
 ///
 /// `.frame`/`.defaultSize` on a `Settings` scene can be overridden by macOS window
-/// restoration, so we locate the window (by localized title) and call setFrame after
-/// a short delay that lets SwiftUI attach the real NSWindow.
+/// restoration, so we take the key window after SwiftUI attaches the real NSWindow.
+/// Title matching is avoided so this still works after a language change.
 private func forceSettingsWindowSize() {
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-        guard let window = NSApp.windows.first(where: { w in
-            guard w.isVisible else { return false }
-            let t = w.title.lowercased()
-            let isSettingsTitle = t.contains("setting") || t.contains("설정")
-            let isNotMainEditor = !t.contains("notepad")
-            return isSettingsTitle && isNotMainEditor
-        }) else { return }
+        guard let window = NSApp.keyWindow, window.isVisible else { return }
 
-        let targetSize = NSSize(width: 440, height: 700)
+        let targetSize = NSSize(width: 440, height: 760)
         var newFrame = window.frame
         newFrame.size = targetSize
         window.setFrame(newFrame, display: true, animate: false)

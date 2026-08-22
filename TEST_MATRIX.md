@@ -128,6 +128,7 @@ Full matrix + results logged in ledger for G008.
 - Upgrade path (v1.0 install → 1.1.0): pre-v1.1 evidence seeds `hasSeenWelcome=true`, `lastSeen=1.0` → **What's New** (not Welcome) once; Help can re-open.
 - Upgrade path (v1.1.0 → 1.2.0): `lastSeen=1.1.0` → **What's New** with five 1.2 bullets (preview, highlight, remote, browser, toggle).
 - Upgrade path (v1.2.1 → 1.2.2): `lastSeen=1.2.1` → **What's New** with five 1.2.2 bullets (parser, scheme, remote, bookmarks, IME).
+- Upgrade path (v1.2.2 → 1.2.3): `lastSeen=1.2.2` → **What's New** with four 1.2.3 bullets (languages, picker, system, relaunch).
 - Fresh 1.2 install (no App Support / no legacy defaults): Welcome only, not What's New.
 
 **Test 5.7 Regression with spelling on**

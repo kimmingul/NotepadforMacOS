@@ -155,6 +155,10 @@
 "whatsNew.1_2_2.remote" = "Remote preview assets stay on public HTTPS, skip private networks, and cap at 8 MB.";
 "whatsNew.1_2_2.bookmarks" = "Folder access bookmarks refresh after a move or reboot.";
 "whatsNew.1_2_2.ime" = "Preview no longer waits on Korean IME composition in other windows.";
+"whatsNew.1_2_3.languages" = "UI in 16 languages — English, Korean, Japanese, Chinese, and more.";
+"whatsNew.1_2_3.picker" = "Settings → Language. Names stay in their own script so you can find yours.";
+"whatsNew.1_2_3.system" = "Default follows this Mac’s language.";
+"whatsNew.1_2_3.relaunch" = "Changing the language relaunches Notepad.";
 
 
 
@@ -176,4 +180,13 @@
 "html.folder.help" = "Grant access to this document’s folder so local images and CSS can be shown.";
 "preview.browser.help" = "Open this file in the default browser";
 "preview.browser.saveFirst" = "Save the file first to open it in a browser";
+
+/* Language */
+"settings.language" = "Language";
+"settings.language.system" = "System (macOS)";
+"settings.language.caption" = "Default follows this Mac’s language. Changing the language relaunches Notepad.";
+"settings.language.relaunch" = "Relaunch Notepad?";
+"settings.language.relaunch.message" = "The new language applies after Notepad restarts.";
+"settings.language.relaunch.now" = "Relaunch";
+"settings.language.relaunch.later" = "Later";
 
