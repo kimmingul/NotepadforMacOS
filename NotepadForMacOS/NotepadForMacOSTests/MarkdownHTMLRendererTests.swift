@@ -52,4 +52,32 @@ final class MarkdownHTMLRendererTests: XCTestCase {
         XCTAssertTrue(result.html.contains("notepad-md://"))
         XCTAssertTrue(result.html.contains("alt=\"cat\""))
     }
+
+    func testHTMLCommentsAreOmittedFromPreview() {
+        let html = MarkdownHTMLRenderer.render(
+            "Hello\n\n<!-- hidden comment -->\n\nAfter <!-- inline --> done",
+            allowsRemoteImages: false,
+            isDark: false
+        ).html
+        XCTAssertTrue(html.contains("Hello"))
+        XCTAssertTrue(html.contains("After"))
+        XCTAssertTrue(html.contains("done"))
+        XCTAssertFalse(html.contains("&lt;!--"))
+        XCTAssertFalse(html.contains("hidden comment"))
+        XCTAssertFalse(html.contains("inline"))
+    }
+
+    func testFenceInfoStringUsesFirstTokenAsLanguageLabel() {
+        let html = MarkdownHTMLRenderer.render(
+            "```md id=\"foo\"\n# Title\n*hi*\n```",
+            allowsRemoteImages: false,
+            isDark: false
+        ).html
+        XCTAssertTrue(html.contains("language-md"))
+        XCTAssertTrue(html.contains(">md<"))
+        XCTAssertTrue(html.contains("# Title"))
+        XCTAssertFalse(html.contains("<h1>"))
+        XCTAssertFalse(html.contains("id=&quot;foo&quot;"))
+    }
+
 }

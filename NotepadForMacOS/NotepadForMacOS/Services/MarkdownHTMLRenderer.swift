@@ -48,8 +48,10 @@ enum MarkdownHTMLRenderer {
         a { color: \(link); }
         code { font-family: ui-monospace, Menlo, monospace; font-size: 0.92em;
           background: \(codeBg); padding: 0.1em 0.35em; border-radius: 3px; }
-        pre { background: \(codeBg); padding: 10px 12px; overflow: auto; border-radius: 4px; }
+        pre { background: \(codeBg); padding: 10px 12px; overflow: auto; border-radius: 4px; position: relative; }
         pre code { padding: 0; background: none; }
+        pre .lang { display: block; text-align: right; font: 11px/1.2 -apple-system, BlinkMacSystemFont, sans-serif;
+          color: \(muted); margin: 0 0 6px; }
         blockquote { border-left: 3px solid \(border); padding-left: 10px; color: \(muted); }
         table { border-collapse: collapse; }
         th, td { border: 1px solid \(border); padding: 4px 8px; }
@@ -93,7 +95,11 @@ private struct HTMLVisitor: MarkupVisitor {
         "<code>\(escape(inlineCode.code))</code>"
     }
     mutating func visitCodeBlock(_ codeBlock: CodeBlock) -> String {
-        "<pre><code>\(escape(codeBlock.code))</code></pre>"
+        let code = escape(codeBlock.code)
+        guard let lang = MarkdownFence.language(from: codeBlock.language) else {
+            return "<pre><code>\(code)</code></pre>"
+        }
+        return "<pre><span class=\"lang\">\(escape(lang))</span><code class=\"language-\(escape(lang))\">\(code)</code></pre>"
     }
     mutating func visitSoftBreak(_ softBreak: SoftBreak) -> String { " " }
     mutating func visitLineBreak(_ lineBreak: LineBreak) -> String { "<br>" }
@@ -144,10 +150,12 @@ private struct HTMLVisitor: MarkupVisitor {
         }
     }
     mutating func visitHTMLBlock(_ html: HTMLBlock) -> String {
-        "<pre><code>\(escape(html.rawHTML))</code></pre>"
+        if MarkdownFence.isHTMLComment(html.rawHTML) { return "" }
+        return "<pre><code>\(escape(html.rawHTML))</code></pre>"
     }
     mutating func visitInlineHTML(_ inlineHTML: InlineHTML) -> String {
-        escape(inlineHTML.rawHTML)
+        if MarkdownFence.isHTMLComment(inlineHTML.rawHTML) { return "" }
+        return escape(inlineHTML.rawHTML)
     }
     mutating func visitTable(_ table: Table) -> String { "<table>\(defaultVisit(table))</table>" }
     mutating func visitTableHead(_ tableHead: Table.Head) -> String {

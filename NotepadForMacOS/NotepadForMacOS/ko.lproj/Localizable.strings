@@ -148,6 +148,9 @@
 "whatsNew.1_2.remote" = "원격 이미지·CSS는 그 탭에서 허용한 뒤에만 불러옵니다. 스크립트는 실행하지 않습니다.";
 "whatsNew.1_2.browser" = "현재 파일을 기본 브라우저에서 엽니다.";
 "whatsNew.1_2.toggle" = "미리보기를 연 뒤에도 + / 미리보기 / 모양 아이콘이 그대로 보입니다.";
+"whatsNew.1_2_1.comments" = "HTML 주석은 미리보기에서 코드로 보이지 않고 숨깁니다.";
+"whatsNew.1_2_1.fences" = "코드 펜스는 GFM처럼 닫는 백틱 개수를 맞추고, 언어는 첫 토큰만 씁니다.";
+
 
 
 /* Markdown preview */

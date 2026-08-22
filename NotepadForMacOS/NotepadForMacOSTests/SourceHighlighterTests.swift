@@ -44,6 +44,20 @@ final class SourceHighlighterTests: XCTestCase {
         XCTAssertEqual(style(of: "*italic*", in: text, kind: .markdown), .emphasis)
     }
 
+    func testLongerOuterFenceDoesNotCloseOnInnerFence() {
+        let text = """
+        ````md id="foo"
+        ```swift
+        let x = 1
+        ```
+        ````
+        *italic*
+        """
+        XCTAssertEqual(style(of: "let x = 1", in: text, kind: .markdown), .codeBlock)
+        XCTAssertEqual(style(of: "*italic*", in: text, kind: .markdown), .emphasis)
+    }
+
+
     func testMarkdownInlineCodeWinsOverEmphasis() {
         let text = "see `*code*` and **bold**"
         XCTAssertEqual(style(of: "`*code*`", in: text, kind: .markdown), .inlineCode)
