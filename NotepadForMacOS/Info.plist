@@ -95,6 +95,8 @@
 			</array>
 		</dict>
 		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Related Image</string>
 			<key>NSIsRelatedItemType</key>
 			<true/>
 			<key>CFBundleTypeRole</key>
