@@ -4,12 +4,12 @@ import UniformTypeIdentifiers
 
 struct MainEditorView: View {
     @EnvironmentObject var tabManager: TabManager
+    @EnvironmentObject var preview: MarkdownPreviewController
 
     @AppStorage("showStatusBar") private var showStatusBar: Bool = true
     @AppStorage("showTabBar") private var showTabBar: Bool = true
     @AppStorage("wordWrap") private var wordWrap: Bool = false
     @AppStorage("fontSize") private var fontSize: Double = 14.0
-
     @State private var showGoToLineSheet = false
     @State private var showFindBar = false
     @State private var showReplace = false
@@ -20,15 +20,11 @@ struct MainEditorView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Tab Bar
             if showTabBar {
                 TabBarView()
                     .environmentObject(tabManager)
-
                 Divider()
             }
-
-            // Inline Find/Replace bar (non-modal, Windows 11 style)
             if showFindBar {
                 FindBarView(
                     findText: $findText,
@@ -44,28 +40,14 @@ struct MainEditorView: View {
                     onClose: { showFindBar = false }
                 )
             }
-
-            // Editor
-            if let selectedTab = tabManager.selectedTab {
-                EditorTextView(documentID: selectedTab.id)
-                    .environmentObject(tabManager)
-                    .id(selectedTab.id) // 탭 전환 시 새 NSTextView 인스턴스
-            } else {
-                VStack {
-                    Text("No document open")
-                        .foregroundStyle(.secondary)
-                    Button(String(localized: "New Tab")) {
-                        tabManager.newTab()
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-
-            // Status Bar
+            editorAndPreview
             if showStatusBar, let tab = tabManager.selectedTab {
                 StatusBarView(document: tab)
                     .environmentObject(tabManager)
             }
+        }
+        .onDrop(of: [UTType.fileURL], isTargeted: nil) { providers in
+            ExternalDocumentOpener.load(providers, into: tabManager)
         }
         .onReceive(NotificationCenter.default.publisher(for: .showFind)) { notification in
             if notification.object as? TabManager === tabManager {
@@ -81,6 +63,46 @@ struct MainEditorView: View {
             GoToLineSheet { line in
                 tabManager.goToLineInSelectedTab(line)
             }
+        }
+    }
+
+    @ViewBuilder
+    private var editorAndPreview: some View {
+        let selected = tabManager.selectedTab
+        let showPreview = PreviewDocumentKind.isPreviewable(fileURL: selected?.fileURL) && preview.layout != .hidden
+
+        if let selected, showPreview, preview.layout == .full {
+            MarkdownPreviewPane(document: selected)
+        } else if let selected, showPreview, preview.layout == .side {
+            HSplitView {
+                editorSurface
+                MarkdownPreviewPane(document: selected)
+                    .frame(minWidth: 240)
+            }
+        } else {
+            editorSurface
+        }
+    }
+
+
+
+
+
+    @ViewBuilder
+    private var editorSurface: some View {
+        if let selectedTab = tabManager.selectedTab {
+            EditorTextView(documentID: selectedTab.id)
+                .environmentObject(tabManager)
+                .id(selectedTab.id)
+        } else {
+            VStack {
+                Text("No document open")
+                    .foregroundStyle(.secondary)
+                Button(String(localized: "New Tab")) {
+                    tabManager.newTab()
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
@@ -108,6 +130,7 @@ struct MainEditorView: View {
 
 struct TabBarView: View {
     @EnvironmentObject var tabManager: TabManager
+    @EnvironmentObject var preview: MarkdownPreviewController
     @AppStorage("isDarkMode") private var isDarkMode: Bool = false
     @State private var draggingTabID: UUID?
 
@@ -141,30 +164,67 @@ struct TabBarView: View {
                 .padding(.vertical, 4)
             }
 
-            Button(action: {
-                tabManager.newTab()
-            }) {
-                Image(systemName: "plus")
-                    .font(.system(size: 13, weight: .medium))
-                    .padding(6)
-            }
-            .buttonStyle(.plain)
+            HStack(spacing: 0) {
+                Button(action: {
+                    tabManager.newTab()
+                }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 13, weight: .medium))
+                        .padding(6)
+                }
+                .buttonStyle(.plain)
 
-            Button(action: {
-                isDarkMode.toggle()
-            }) {
-                Image(systemName: isDarkMode ? "moon.fill" : "sun.max.fill")
-                    .font(.system(size: 13, weight: .medium))
-                    .frame(width: 28, height: 28)
-                    .contentShape(Rectangle())
+                if selectedTabIsMarkdown {
+                    Button {
+                        preview.toggleChrome()
+                    } label: {
+                        Image(systemName: "sidebar.right")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(Color.primary)
+                            .frame(width: 28, height: 28)
+                            .background(
+                                preview.isVisible
+                                    ? Color.primary.opacity(0.12)
+                                    : Color.clear,
+                                in: RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            )
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help(String(localized: "markdown.preview.help"))
+                    .accessibilityLabel(Text(previewToggleTitle))
+                    .accessibilityAddTraits(preview.isVisible ? .isSelected : [])
+                }
+
+                Button(action: {
+                    isDarkMode.toggle()
+                }) {
+                    Image(systemName: isDarkMode ? "moon.fill" : "sun.max.fill")
+                        .font(.system(size: 13, weight: .medium))
+                        .frame(width: 28, height: 28)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help(colorSchemeToggleTitle)
+                .accessibilityLabel(Text(colorSchemeToggleTitle))
+                .padding(.trailing, 8)
             }
-            .buttonStyle(.plain)
-            .help(colorSchemeToggleTitle)
-            .accessibilityLabel(Text(colorSchemeToggleTitle))
-            .padding(.trailing, 8)
+            .fixedSize(horizontal: true, vertical: false)
+            .layoutPriority(1)
+
         }
         .frame(height: 36)
         .background(Color(NSColor.windowBackgroundColor))
+    }
+
+    private var selectedTabIsMarkdown: Bool {
+        PreviewDocumentKind.isPreviewable(fileURL: tabManager.selectedTab?.fileURL)
+    }
+
+    private var previewToggleTitle: String {
+        preview.isVisible
+            ? String(localized: "markdown.hide")
+            : String(localized: "markdown.preview")
     }
 
     private var colorSchemeToggleTitle: String {
@@ -234,6 +294,7 @@ struct TabItemView: View {
 struct StatusBarView: View {
     let document: Document
     @EnvironmentObject var tabManager: TabManager
+    @EnvironmentObject var preview: MarkdownPreviewController
 
     @AppStorage("fontSize") private var fontSize: Double = 14.0
 
@@ -282,6 +343,21 @@ struct StatusBarView: View {
 
             // Right side items with more breathing room
             HStack(spacing: 12) {
+
+                if PreviewDocumentKind.isPreviewable(fileURL: document.fileURL) {
+                    Button {
+                        preview.toggleChrome()
+                    } label: {
+                        Text(preview.layout == .hidden
+                             ? String(localized: "markdown.preview")
+                             : String(localized: "markdown.hide"))
+                            .font(.system(size: 11, weight: .medium))
+                            .lineLimit(1)
+                            .fixedSize()
+                    }
+                    .buttonStyle(.plain)
+                    .help(String(localized: "markdown.preview.help"))
+                }
                 Text("\(zoomPercent)%")
                     .font(.system(size: 11, weight: .medium))
                     .monospacedDigit()

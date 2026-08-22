@@ -38,7 +38,10 @@ struct NotepadApp: App {
 
 struct NotepadWindowView: View {
     @StateObject private var tabManager: TabManager
+    @StateObject private var preview = MarkdownPreviewController()
     @ObservedObject private var onboardingPresenter = OnboardingPresenter.shared
+    @Environment(\.controlActiveState) private var controlActiveState
+
 
     @AppStorage("isDarkMode") private var isDarkMode: Bool = false
     @AppStorage(OnboardingState.hasSeenWelcomeKey) private var hasSeenWelcome: Bool = false
@@ -60,13 +63,21 @@ struct NotepadWindowView: View {
     var body: some View {
         MainEditorView()
             .environmentObject(tabManager)
+            .environmentObject(preview)
             .focusedSceneObject(tabManager)
+            .focusedSceneObject(preview)
             .frame(minWidth: 600, minHeight: 400)
             .preferredColorScheme(isDarkMode ? .dark : .light)
             .navigationTitle(windowTitle)
             .onAppear {
+                ExternalDocumentOpener.activate(tabManager)
                 evaluateOnboarding()
                 claimPendingOnboardingSheet()
+            }
+            .onChange(of: controlActiveState) { _, state in
+                if state == .key {
+                    ExternalDocumentOpener.activate(tabManager)
+                }
             }
             .onChange(of: onboardingPresenter.activeSheet) { _, _ in
                 claimPendingOnboardingSheet()
@@ -95,7 +106,11 @@ struct NotepadWindowView: View {
                     showWhatsNew = false
                 }
             }
+            .onChange(of: tabManager.tabs.map(\.id)) { _, ids in
+                preview.retainRemoteAllows(forOpenTabs: ids)
+            }
             .onDisappear {
+                ExternalDocumentOpener.deactivate(tabManager)
                 NotepadTextInput.commitActiveComposition()
                 if AppDelegate.isTerminating {
                     tabManager.forcePersist()          // 앱 종료 → 복원을 위해 보존

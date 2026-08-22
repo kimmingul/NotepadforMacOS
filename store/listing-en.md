@@ -1,67 +1,157 @@
-# App Store listing — English
+# App Store listing — English (global positioning)
 
-Paste each field into App Store Connect → your app → (version) → App Information / Pricing / Localizations. Character limits noted in (parentheses); all drafts below are within limit.
+Paste into App Store Connect → Notepad Classic → localizations (en-US primary).  
+Limits in parentheses; drafts below are within limit.
+
+**Positioning (one line):**  
+*The private plain-text notepad for Mac — no AI, no account, no cloud. Tabs + session restore that keep unsaved notes.*
+
+> Live App Store name is currently **Notepad Classic**. If you change the name, update App Store Connect first; GitHub/Pages can say “Notepad for macOS / Notepad Classic”.
+
+---
 
 ## App Name (30)
-Notepad — Plain Text Editor
 
-> If "Notepad" alone is rejected for being too generic / taken, this combined form is unique and still searchable. Adjust to match the name you reserved in App Store Connect.
+**Recommended (if rename allowed):**
+```
+Notepad Classic — Private
+```
+(25 characters)
+
+**Alternatives:**
+```
+Plain Notepad: Tabs & Restore
+```
+(29)
+
+```
+Notepad Classic
+```
+(keep current if rename is costly)
+
+---
 
 ## Subtitle (30)
-Tabs, sessions, spell check
+
+```
+No AI. Tabs. Session restore.
+```
+(28)
+
+**Alternatives:**
+```
+Private plain text for Mac
+```
+(26)
+
+```
+Tabs, restore, no cloud AI
+```
+(26)
+
+---
 
 ## Promotional Text (170)
-A fast, no-frills plain-text editor for macOS — multiple tabs, automatic session restore, spell check, and rock-solid Korean/legacy encoding support.
+
+```
+Private plain-text notepad for Mac. No AI, no account, no cloud. Tabs + session restore keep unsaved notes. Local spell check; UTF-8, EUC-KR, UTF-16.
+```
+(≤170 characters)
+
+---
 
 ## Description (4000)
-Notepad is a fast, distraction-free plain-text editor for macOS, inspired by the built-in Notepad on Windows 11 and rebuilt natively in Swift.
 
-No rich text. No Markdown styling. No AI. No accounts. Just text — open it, type it, and trust that it will still be there next time.
+```
+Notepad Classic is a fast, private plain-text editor for macOS.
 
-SESSION RESTORE
-Quit with tabs open — including notes you never saved — and they all come back exactly as you left them on the next launch, even after a reboot. Choose in Settings whether each launch continues your previous session or starts fresh.
+No rich-text WYSIWYG. No AI rewrite. No accounts. No cloud sync required. Just text—open it, type it, and trust it will still be there next time. Markdown and HTML can show an optional preview; the source stays plain text.
 
-TABS
-Work across multiple documents in one window. Reorder tabs by dragging, cycle them with Ctrl-Tab, and see an asterisk on any tab with unsaved changes.
-
-BUILT FOR KOREAN (AND LEGACY) TEXT
-Open and save in UTF-8, UTF-8 with BOM, EUC-KR, and UTF-16 (LE/BE). Reopen a file in a different encoding or convert the current text from the status bar, with a clear warning if a character can't be represented. Hangul and other CJK input is committed safely so nothing is lost mid-composition.
-
-SPELL CHECK
-System dictionary spell check (on by default) and optional autocorrect. Disable checking for code/log file extensions in Settings. No network.
-
-EVERYTHING YOU EXPECT
-• Inline, non-modal Find & Replace with match count, wrap-around, and case options
-• Print and Page Setup
-• Go to line, insert time/date, word-wrap toggle, zoom in/out
-• Welcome on first launch and What's New on upgrade
-• Multiple windows
-• Light and Dark mode
+WHY NOT TEXTEDIT?
+TextEdit is fine for light work. Notepad Classic is built for people who want a true notepad: multiple tabs, session restore that includes unsaved buffers, encoding control, and nothing that phones home unless you allow remote images or CSS in a preview tab.
 
 PRIVATE BY DESIGN
-Notepad runs fully sandboxed, makes no network connections, shows no ads, and collects no data whatsoever. Your files stay on your Mac.
+• Fully sandboxed
+• No network unless you allow remote images or CSS in a Markdown or HTML preview tab
+• No ads, no tracking, no analytics SDK
+• Your files stay on your Mac
 
-Built by Min-Gul Kim.
+SESSION RESTORE
+Quit with tabs open—including notes you never saved—and they come back after relaunch or reboot. Choose in Settings: continue previous session or start fresh.
+
+TABS THAT STAY OUT OF THE WAY
+Several documents in one window. Drag to reorder, Ctrl-Tab to cycle, asterisk (*) on unsaved tabs.
+
+SPELL CHECK (LOCAL)
+System dictionary spell check (on by default). Optional autocorrect. Turn checking off for code/log extensions. No cloud AI.
+
+PREVIEW (OPTIONAL)
+Side or full-screen preview for .md and .html. Scripts never run. Remote images and stylesheets load only after you allow them for that tab. Open the file in your default browser when you want the real thing.
+
+ENCODINGS THAT DON’T GUESS WRONG
+Open and save UTF-8, UTF-8 with BOM, EUC-KR, and UTF-16 (LE/BE). Reopen or convert from the status bar, with a clear warning if characters can’t be represented. Hangul and other CJK input commits safely mid-composition.
+
+EVERYTHING YOU EXPECT FROM A NOTEPAD
+• Inline find & replace (match count, wrap, case)
+• Go to line, insert date/time, word wrap, zoom
+• Syntax highlight for Markdown, JSON, XML, HTML, and logs
+• Print & Page Setup
+• Multiple windows · Light & Dark mode
+• English & Korean UI
+
+Built natively in Swift for Apple Silicon.
+Developer: Min-Gul Kim.
+```
+
+---
 
 ## Keywords (100, comma-separated)
-notepad,text editor,plain text,txt,메모장,euc-kr,encoding,tabs,utf-8,spell,unicode,한글
 
-## What's New (4000) — for v1.1
-Win11 basic Notepad parity: spelling and onboarding, still plain text only.
-• Spell check (system dictionary) and optional autocorrect
-• Disable spell check for code/log extensions
-• Welcome on first launch; What's New on upgrade
-• Status bar: click line/col for Go to Line; clearer encoding menus
-• Clearer font settings (zoom vs base size)
+```
+notepad,plain text,text editor,txt,tabs,session,restore,privacy,offline,spell,encoding,utf-8
+```
+(98 characters — no redundant “AI”; privacy/offline carry the anti-AI intent)
+
+**Optional swap-ins if you target Asia more:** replace `spell` or `offline` with `euc-kr` / `unicode`.
+
+---
+
+## What's New (4000) — v1.2
+
+```
+Optional preview for Markdown and HTML. Still a plain-text editor.
+
+• Side or full-screen preview for .md and .html (off by default)
+• Source highlight for Markdown, JSON, XML, HTML, and logs
+• Remote images/CSS only after you allow them for that tab; scripts never run
+• Open the current file in your default browser
+• Preview toggle stays visible next to + and appearance while the pane is open
+
+No AI. No accounts. Network only for allowed preview resources.
+```
+
+---
 
 ## URLs
-- Support URL (required, must be https):  https://github.com/kimmingul/NotepadforMacOS
-- Marketing URL (optional):  (leave blank or same as above)
-- Privacy Policy URL (required):  https://kimmingul.github.io/NotepadforMacOS/store/privacy-policy.html
+
+- Support: https://github.com/kimmingul/NotepadforMacOS  
+- Marketing (optional): https://kimmingul.github.io/NotepadforMacOS/  
+- Privacy: https://kimmingul.github.io/NotepadforMacOS/store/privacy-policy.html  
 
 ## Category
-- Primary: Productivity
-- Secondary: (optional) Utilities
+
+- Primary: **Productivity**  
+- Secondary: Utilities  
 
 ## Copyright
+
 © 2026 Min-Gul Kim
+
+---
+
+## Connect checklist after paste
+
+- [ ] en-US description + subtitle + keywords updated  
+- [ ] Screenshots use English captions (see `store/screenshot-copy.md`)  
+- [ ] App name change only if you accept re-review / possible name review  
+- [ ] Privacy “Data Not Collected” still accurate  

@@ -14,6 +14,9 @@ struct Document: Identifiable, Equatable, Sendable {
     /// 파일을 열거나 저장할 때 생성하며, 세션에 함께 저장된다.
     var securityScopedBookmark: Data?
 
+    /// Parent-folder bookmark so sibling images can be read after relaunch.
+    var directoryBookmark: Data?
+
     /// 실제 편집 중인 텍스트 (항상 Unicode String)
     var content: String
 
@@ -56,12 +59,14 @@ struct Document: Identifiable, Equatable, Sendable {
 
     init(fileURL: URL? = nil,
          securityScopedBookmark: Data? = nil,
+         directoryBookmark: Data? = nil,
          content: String = "",
          encoding: TextEncoding = .utf8,
          lineEnding: LineEnding = .lf,
          isDirty: Bool = false) {
         self.fileURL = fileURL
         self.securityScopedBookmark = securityScopedBookmark
+        self.directoryBookmark = directoryBookmark
         self.content = content
         self.encoding = encoding
         self.lineEnding = lineEnding

@@ -133,13 +133,39 @@
 "welcome.bullet.encoding" = "상태 표시줄에서 UTF-8, EUC-KR, UTF-16 등 인코딩 지원.";
 "welcome.bullet.spelling" = "선택적 맞춤법 검사와 자동 수정(시스템 사전).";
 "welcome.bullet.find" = "인라인 찾기/바꾸기, 인쇄, 줄로 이동.";
-"welcome.footer" = "AI 없음. 네트워크 없음. 계정 없음. 파일은 이 Mac에만 남습니다.";
+"welcome.footer" = "AI 없음. 계정 없음. 파일은 이 Mac에만 남습니다. 네트워크는 Markdown/HTML 미리보기에서 원격 이미지·CSS를 허용한 경우에만 사용합니다.";
 "welcome.getStarted" = "시작하기";
 "whatsNew.title" = "%@의 새로운 기능";
-"whatsNew.subtitle" = "이 버전의 플레인 텍스트 개선 사항:";
+"whatsNew.subtitle" = "이 버전의 새로운 기능:";
 "whatsNew.generic" = "버그 수정 및 소규모 개선.";
 "whatsNew.1_1.spell" = "밑줄과 제안이 있는 맞춤법 검사(시스템 사전).";
 "whatsNew.1_1.autocorrect" = "선택적 자동 수정(기본값 꺼짐).";
 "whatsNew.1_1.settings" = "코드/로그 확장자에서 맞춤법 검사 비활성화.";
 "whatsNew.1_1.onboarding" = "첫 실행 시 시작 안내, 업그레이드 시 새로운 기능.";
 "whatsNew.1_1.polish" = "글꼴 설정과 상태 표시줄 개선(줄 이동, 인코딩 메뉴).";
+"whatsNew.1_2.preview" = ".md / .html 선택 미리보기(사이드·전체화면). 원문은 플레인 텍스트 그대로입니다.";
+"whatsNew.1_2.highlight" = "Markdown, JSON, XML, HTML, 로그 소스 하이라이트.";
+"whatsNew.1_2.remote" = "원격 이미지·CSS는 그 탭에서 허용한 뒤에만 불러옵니다. 스크립트는 실행하지 않습니다.";
+"whatsNew.1_2.browser" = "현재 파일을 기본 브라우저에서 엽니다.";
+"whatsNew.1_2.toggle" = "미리보기를 연 뒤에도 + / 미리보기 / 모양 아이콘이 그대로 보입니다.";
+
+
+/* Markdown preview */
+"markdown.preview" = "미리보기";
+"markdown.hide" = "미리보기 숨기기";
+"markdown.full" = "전체 화면 미리보기";
+"markdown.exitFull" = "전체 화면 미리보기 종료";
+"markdown.preview.help" = "마크다운 미리보기를 보이거나 숨깁니다";
+"markdown.remoteAllow" = "원격 이미지 허용";
+"markdown.remoteOn" = "원격 이미지 차단";
+"markdown.remote.help" = "이 탭에서만 https 이미지를 불러옵니다. 탭을 닫으면 해제됩니다.";
+"markdown.remoteBlocked" = "원격 이미지가 차단되었습니다. 미리보기 헤더에서 허용하세요.";
+"markdown.folderAllow" = "이 폴더 접근 허용";
+"markdown.folder.help" = "로컬 이미지를 표시하려면 이 문서가 있는 폴더 접근을 허용하세요.";
+"html.remoteAllow" = "원격 이미지·CSS 허용";
+"html.remoteOn" = "원격 이미지·CSS 차단";
+"html.remote.help" = "이 탭에서만 https 이미지와 스타일시트를 불러옵니다. 탭을 닫으면 해제됩니다.";
+"html.folder.help" = "로컬 이미지와 CSS를 표시하려면 이 문서가 있는 폴더 접근을 허용하세요.";
+"preview.browser.help" = "기본 브라우저에서 이 파일을 엽니다";
+"preview.browser.saveFirst" = "브라우저에서 열려면 먼저 파일을 저장하세요";
+

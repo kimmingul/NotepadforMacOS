@@ -14,7 +14,7 @@ App Store Connect → 앱 → **TestFlight**(또는 버전의 "빌드" 섹션)�
 ## 2) 앱 개인정보(App Privacy)  → "데이터 미수집"
 경로: 앱 → **앱 개인정보** → 시작.
 - "이 앱에서 데이터를 수집합니까?" → **아니요 (Data Not Collected)** 선택.
-- 끝. (네트워크·분석·추적 전혀 없음.)
+- 끝. (분석·추적 없음. 네트워크는 미리보기에서 원격 이미지/CSS를 허용한 탭에서만.)
 - **개인정보 처리방침 URL(필수)**: https://kimmingul.github.io/NotepadforMacOS/store/privacy-policy.html (이미 GitHub Pages로 게시·확인됨).
 
 ## 3) 연령 등급(Age Rating)  → 전부 "없음" → 4+
