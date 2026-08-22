@@ -544,12 +544,12 @@
     <section class="hero">
       <div class="hero-inner">
         <div>
-          <p class="eyebrow">Private plain text · macOS · v1.2.1</p>
+          <p class="eyebrow">Private plain text · macOS · v1.2.2</p>
           <h1>No AI. No account. No cloud.</h1>
           <p class="hero-copy">A fast plain-text notepad for Mac. Multi-tab editing with session restore—including unsaved notes—local spell check, encodings done right, and source highlight for Markdown, HTML, JSON, XML, and logs. Optional preview for <code>.md</code> and <code>.html</code>. Your files stay on your Mac.</p>
           <div class="hero-actions">
             <a class="button" href="https://apps.apple.com/app/notepad-classic/id6782928983">Mac App Store</a>
-            <a class="button secondary" href="https://github.com/kimmingul/NotepadforMacOS/releases/tag/v1.2.1">Download DMG</a>
+            <a class="button secondary" href="https://github.com/kimmingul/NotepadforMacOS/releases/tag/v1.2.2">Download DMG</a>
           </div>
           <p class="availability">Free · Apple Silicon · Sandboxed · Network only if you allow remote preview assets · English &amp; Korean. Also on <a href="https://github.com/kimmingul/NotepadforMacOS">GitHub</a>.</p>
         </div>
@@ -571,13 +571,13 @@
     <section id="whats-new" class="section">
       <div class="section-inner">
         <div class="whats-new">
-          <h2>What's new in v1.2.1</h2>
-          <p class="lede">Preview polish on 1.2. Install from the notarized DMG on other Macs. <a href="https://github.com/kimmingul/NotepadforMacOS/releases/tag/v1.2.1">Release notes</a></p>
+          <h2>What's new in v1.2.2</h2>
+          <p class="lede">Safer optional preview. Install from the notarized DMG on other Macs. <a href="https://github.com/kimmingul/NotepadforMacOS/releases/tag/v1.2.2">Release notes</a></p>
           <ul>
-            <li>HTML comments are hidden in preview. They no longer show as code.</li>
-            <li>Fenced code follows GFM: closing backticks must match the opener. Nested fences stay intact.</li>
-            <li>Language label is the first info-string token (<code>```md id="..."</code> → <code>md</code>).</li>
-            <li>Still: highlight for Markdown, HTML, JSON, XML, and logs. Optional <code>.md</code> / <code>.html</code> preview.</li>
+            <li>HTML preview is rebuilt from a tag allowlist. Scripts, forms, and event handlers never run.</li>
+            <li>Preview images use a private scheme only. Local HTML/Markdown/SVG are not served as images.</li>
+            <li>Remote assets stay on public HTTPS, skip private networks, and cap at 8 MB.</li>
+            <li>Folder bookmarks refresh after a move or reboot. Preview no longer waits on IME in other windows.</li>
           </ul>
         </div>
       </div>
@@ -645,11 +645,11 @@
         <div class="release">
           <div>
             <h2>Get Notepad Classic</h2>
-            <p><strong>Mac App Store</strong> (recommended) or a <strong>Developer ID–signed, notarized DMG</strong> from GitHub. On another Mac, use this DMG — do not copy a Debug build. v1.2.1 hides HTML comments in preview and fixes nested fences.</p>
+            <p><strong>Mac App Store</strong> (recommended) or a <strong>Developer ID–signed, notarized DMG</strong> from GitHub. On another Mac, use this DMG — do not copy a Debug build. v1.2.2 hardens HTML/Markdown preview.</p>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px;align-items:stretch">
             <a class="button" href="https://apps.apple.com/app/notepad-classic/id6782928983">App Store</a>
-            <a class="button secondary" href="https://github.com/kimmingul/NotepadforMacOS/releases/tag/v1.2.1">DMG v1.2.1</a>
+            <a class="button secondary" href="https://github.com/kimmingul/NotepadforMacOS/releases/tag/v1.2.2">DMG v1.2.2</a>
           </div>
         </div>
       </div>

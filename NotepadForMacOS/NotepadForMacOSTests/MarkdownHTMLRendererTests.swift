@@ -7,6 +7,7 @@ final class MarkdownHTMLRendererTests: XCTestCase {
         let html = MarkdownHTMLRenderer.render("# Hi\n\nHello *world*", allowsRemoteImages: false, isDark: false).html
         XCTAssertTrue(html.contains("<h1>Hi</h1>"))
         XCTAssertTrue(html.contains("<em>world</em>"))
+        XCTAssertTrue(html.contains("Content-Security-Policy"))
     }
 
     func testEscapesRawHTML() {
@@ -55,7 +56,7 @@ final class MarkdownHTMLRendererTests: XCTestCase {
 
     func testHTMLCommentsAreOmittedFromPreview() {
         let html = MarkdownHTMLRenderer.render(
-            "Hello\n\n<!-- hidden comment -->\n\nAfter <!-- inline --> done",
+            "Hello\n\n<!-- hidden comment -->\n\nAfter <!-- inline-note --> done",
             allowsRemoteImages: false,
             isDark: false
         ).html
@@ -64,7 +65,7 @@ final class MarkdownHTMLRendererTests: XCTestCase {
         XCTAssertTrue(html.contains("done"))
         XCTAssertFalse(html.contains("&lt;!--"))
         XCTAssertFalse(html.contains("hidden comment"))
-        XCTAssertFalse(html.contains("inline"))
+        XCTAssertFalse(html.contains("inline-note"))
     }
 
     func testFenceInfoStringUsesFirstTokenAsLanguageLabel() {

@@ -7,25 +7,35 @@ import Foundation
 ///   연 상태에서만 읽기/쓰기를 수행한 뒤 접근을 해제한다.
 nonisolated enum SecurityScopedFile {
 
+    /// Resolves a security-scoped bookmark. If the bookmark is stale, a replacement is returned.
+    static func refreshBookmark(_ bookmark: Data?, fallbackURL: URL? = nil) -> (url: URL?, bookmark: Data?) {
+        guard let bookmark else { return (fallbackURL, nil) }
+        var isStale = false
+        guard let resolved = try? URL(
+            resolvingBookmarkData: bookmark,
+            options: [.withSecurityScope],
+            relativeTo: nil,
+            bookmarkDataIsStale: &isStale
+        ) else {
+            return (fallbackURL, bookmark)
+        }
+        if isStale, let fresh = makeBookmark(for: resolved) {
+            return (resolved, fresh)
+        }
+        return (resolved, bookmark)
+    }
+
     /// 가능하면 북마크에서 URL을 해석해 보안 스코프 접근을 연 뒤 `body`를 실행하고,
     /// 작업이 끝나면 접근을 해제한다. 북마크가 없으면(같은 실행 세션에서 막 선택한 파일 등)
-    /// 전달된 `url`을 그대로 사용한다.
-    static func access(_ url: URL, bookmark: Data?, _ body: (URL) -> Void) {
-        var target = url
-        if let bookmark {
-            var isStale = false
-            if let resolved = try? URL(
-                resolvingBookmarkData: bookmark,
-                options: [.withSecurityScope],
-                relativeTo: nil,
-                bookmarkDataIsStale: &isStale
-            ) {
-                target = resolved
-            }
-        }
+    /// 전달된 `url`을 그대로 사용한다. stale이면 새 북마크 데이터를 반환한다.
+    @discardableResult
+    static func access(_ url: URL, bookmark: Data?, _ body: (URL) -> Void) -> Data? {
+        let refreshed = refreshBookmark(bookmark, fallbackURL: url)
+        let target = refreshed.url ?? url
         let started = target.startAccessingSecurityScopedResource()
         defer { if started { target.stopAccessingSecurityScopedResource() } }
         body(target)
+        return refreshed.bookmark == bookmark ? nil : refreshed.bookmark
     }
 
     /// 현재 접근 권한이 있는 URL(파일 패널이 막 반환한 URL 등)에 대해

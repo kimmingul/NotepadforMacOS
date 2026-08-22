@@ -19,6 +19,9 @@ final class MarkdownImagePolicyTests: XCTestCase {
         XCTAssertEqual(MarkdownImagePolicy.classify("notepad-md://img"), .rejected)
         XCTAssertEqual(MarkdownImagePolicy.classify("http://example.com/a.png"), .rejected)
         XCTAssertEqual(MarkdownImagePolicy.classify(""), .rejected)
+        XCTAssertEqual(MarkdownImagePolicy.classify("//img?k=local&p=page.html"), .rejected)
+        XCTAssertEqual(MarkdownImagePolicy.classify("https:evil.com/a.png"), .rejected)
+        XCTAssertEqual(MarkdownImagePolicy.classify(#"..\secret.png"#), .rejected)
     }
 
 

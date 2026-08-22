@@ -13,6 +13,29 @@ enum MarkdownPreviewReload {
     }
 }
 
+enum MarkdownPreviewNavigation {
+    enum Decision: Equatable {
+        case allow
+        case cancel
+        case openExternally
+    }
+
+    static func decide(url: URL, isMainFrame: Bool) -> Decision {
+        switch url.scheme?.lowercased() {
+        case "about":
+            return .allow
+        case MarkdownImagePolicy.urlScheme:
+            if url.host == "preview" { return .allow }
+            if isMainFrame { return .cancel }
+            return url.host == "img" ? .allow : .cancel
+        case "http", "https", "mailto":
+            return .openExternally
+        default:
+            return .cancel
+        }
+    }
+}
+
 struct MarkdownPreviewPane: View {
     let document: Document
     @EnvironmentObject var preview: MarkdownPreviewController
@@ -114,7 +137,7 @@ struct MarkdownPreviewPane: View {
         renderTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(250))
             guard !Task.isCancelled else { return }
-            if NSApp.windows.contains(where: { ($0.firstResponder as? NSTextView)?.hasMarkedText() == true }) {
+            if (NSApp.keyWindow?.firstResponder as? NSTextView)?.hasMarkedText() == true {
                 scheduleRender()
                 return
             }
@@ -280,14 +303,18 @@ struct MarkdownPreviewWebView: NSViewRepresentable {
                 decisionHandler(.cancel)
                 return
             }
-            if url.scheme == MarkdownImagePolicy.urlScheme || url.scheme == "about" {
+            switch MarkdownPreviewNavigation.decide(
+                url: url,
+                isMainFrame: navigationAction.targetFrame?.isMainFrame ?? true
+            ) {
+            case .allow:
                 decisionHandler(.allow)
-                return
-            }
-            if url.scheme == "http" || url.scheme == "https" || url.scheme == "mailto" {
+            case .openExternally:
                 NSWorkspace.shared.open(url)
+                decisionHandler(.cancel)
+            case .cancel:
+                decisionHandler(.cancel)
             }
-            decisionHandler(.cancel)
         }
     }
 }

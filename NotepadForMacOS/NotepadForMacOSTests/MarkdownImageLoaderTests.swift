@@ -3,30 +3,63 @@ import XCTest
 
 final class MarkdownImageLoaderTests: XCTestCase {
 
-    func testFileBookmarkDoesNotServeMarkdownAsImage() async throws {
+    func testLocalHTMLAndMarkdownAreDenied() async throws {
         let dir = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: dir) }
 
-        let markdownURL = dir.appendingPathComponent("note.md")
-        try Data("not-an-image".utf8).write(to: markdownURL)
-        let fileBookmark = SecurityScopedFile.makeBookmark(for: markdownURL)
-        XCTAssertNotNil(fileBookmark)
+        try Data("<html>hi</html>".utf8).write(to: dir.appendingPathComponent("page.html"))
+        try Data("not-an-image".utf8).write(to: dir.appendingPathComponent("note.md"))
+        try Data("secret".utf8).write(to: dir.appendingPathComponent("x.svg"))
+        try Data([0x89, 0x50, 0x4E, 0x47]).write(to: dir.appendingPathComponent("ok.png"))
 
-        let request = try XCTUnwrap(
-            MarkdownImagePolicy.customSchemeURL(kind: "local", payload: "missing.png")
-        )
-        let result = await MarkdownImageLoader.load(
+        let html = await loadLocal(payload: "page.html", directory: dir)
+        let markdown = await loadLocal(payload: "note.md", directory: dir)
+        let svg = await loadLocal(payload: "x.svg", directory: dir)
+        let png = await loadLocal(payload: "ok.png", directory: dir)
+
+        XCTAssertEqual(html, .denied)
+        XCTAssertEqual(markdown, .denied)
+        XCTAssertEqual(svg, .denied)
+        if case .data(_, let mime) = png {
+            XCTAssertTrue(mime.hasPrefix("image/"))
+        } else {
+            XCTFail("png sibling should load as image data, got \(png)")
+        }
+    }
+
+    func testAcceptsOnlyBoundedImageOrCSS() {
+        XCTAssertTrue(MarkdownImageLoader.acceptsResource(byteCount: 1, mime: "image/png"))
+        XCTAssertTrue(MarkdownImageLoader.acceptsResource(byteCount: 10, mime: "text/css"))
+        XCTAssertFalse(MarkdownImageLoader.acceptsResource(byteCount: 0, mime: "image/png"))
+        XCTAssertFalse(MarkdownImageLoader.acceptsResource(byteCount: MarkdownImageLoader.maxResourceBytes + 1, mime: "image/png"))
+        XCTAssertFalse(MarkdownImageLoader.acceptsResource(byteCount: 10, mime: "text/html"))
+        XCTAssertFalse(MarkdownImageLoader.acceptsResource(byteCount: 10, mime: "image/svg+xml"))
+        XCTAssertFalse(MarkdownImageLoader.acceptsResource(byteCount: 10, mime: "text/plain"))
+    }
+
+    func testPrivateAndNonHTTPSRemoteURLsAreDenied() {
+        XCTAssertTrue(MarkdownImageLoader.isAllowedRemoteURL(URL(string: "https://example.com/a.png")!))
+        XCTAssertFalse(MarkdownImageLoader.isAllowedRemoteURL(URL(string: "http://example.com/a.png")!))
+        XCTAssertFalse(MarkdownImageLoader.isAllowedRemoteURL(URL(string: "https://localhost/a.png")!))
+        XCTAssertFalse(MarkdownImageLoader.isAllowedRemoteURL(URL(string: "https://127.0.0.1/a.png")!))
+        XCTAssertFalse(MarkdownImageLoader.isAllowedRemoteURL(URL(string: "https://192.168.1.4/a.png")!))
+        XCTAssertFalse(MarkdownImageLoader.isAllowedRemoteURL(URL(string: "https://10.0.0.5/a.png")!))
+        XCTAssertFalse(MarkdownImageLoader.isAllowedRemoteURL(URL(string: "https://169.254.169.254/latest")!))
+        XCTAssertFalse(MarkdownImageLoader.isAllowedRemoteURL(URL(string: "https://[::1]/a.png")!))
+        XCTAssertTrue(MarkdownImageLoader.hostResolvesToPrivateAddress("localhost"))
+        XCTAssertTrue(MarkdownImageLoader.hostResolvesToPrivateAddress("127.0.0.1"))
+    }
+
+    private func loadLocal(payload: String, directory: URL) async -> MarkdownImageLoadResult {
+        let request = MarkdownImagePolicy.customSchemeURL(kind: "local", payload: payload)!
+        return await MarkdownImageLoader.load(
             url: request,
-            documentDirectory: dir,
+            documentDirectory: directory,
             directoryBookmark: nil,
             allowsRemote: false
         )
-
-        if case .data = result {
-            XCTFail("file bookmark must not return the markdown file as image bytes")
-        }
     }
 
     func testRemoteHTTPIsDeniedEvenWhenAllowed() async throws {
@@ -76,5 +109,21 @@ final class MarkdownPreviewReloadTests: XCTestCase {
                 lastDirectoryBookmark: before
             )
         )
+    }
+}
+
+final class MarkdownPreviewNavigationTests: XCTestCase {
+
+    func testCustomSchemeIsResourceOnly() throws {
+        let preview = try XCTUnwrap(URL(string: "\(MarkdownImagePolicy.urlScheme)://preview/"))
+        let image = try XCTUnwrap(MarkdownImagePolicy.customSchemeURL(kind: "local", payload: "page.html"))
+        let https = try XCTUnwrap(URL(string: "https://example.com"))
+
+        XCTAssertEqual(MarkdownPreviewNavigation.decide(url: preview, isMainFrame: true), .allow)
+        XCTAssertEqual(MarkdownPreviewNavigation.decide(url: image, isMainFrame: true), .cancel)
+        XCTAssertEqual(MarkdownPreviewNavigation.decide(url: image, isMainFrame: false), .allow)
+        XCTAssertEqual(MarkdownPreviewNavigation.decide(url: https, isMainFrame: true), .openExternally)
+        XCTAssertEqual(MarkdownPreviewNavigation.decide(url: URL(string: "about:blank")!, isMainFrame: true), .allow)
+        XCTAssertEqual(MarkdownPreviewNavigation.decide(url: URL(string: "javascript:alert(1)")!, isMainFrame: true), .cancel)
     }
 }

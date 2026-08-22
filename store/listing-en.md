@@ -116,16 +116,15 @@ notepad,plain text,text editor,txt,tabs,session,restore,privacy,offline,spell,en
 
 ---
 
-## What's New (4000) — v1.2
+## What's New (4000) — v1.2.2
 
 ```
-Optional preview for Markdown and HTML. Still a plain-text editor.
+Safer optional preview for Markdown and HTML. Still a plain-text editor.
 
-• Side or full-screen preview for .md and .html (off by default)
-• Source highlight for Markdown, JSON, XML, HTML, and logs
-• Remote images/CSS only after you allow them for that tab; scripts never run
-• Open the current file in your default browser
-• Preview toggle stays visible next to + and appearance while the pane is open
+• HTML preview rebuilt from a tag allowlist; scripts never run
+• Preview images use a private scheme only
+• Remote assets: public HTTPS, no private networks, 8 MB cap
+• Folder bookmarks refresh after a move or reboot
 
 No AI. No accounts. Network only for allowed preview resources.
 ```

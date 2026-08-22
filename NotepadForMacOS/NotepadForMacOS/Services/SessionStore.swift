@@ -180,11 +180,15 @@ final class SessionStore: ObservableObject {
             var fileURL: URL?
             if let path = info["filePath"] as? String { fileURL = URL(fileURLWithPath: path) }
             // 북마크가 있으면 그쪽이 더 신뢰할 수 있는 위치 (샌드박스 접근 보존)
-            if let bookmark {
-                var stale = false
-                if let resolved = try? URL(resolvingBookmarkData: bookmark, options: [.withSecurityScope],
-                                           relativeTo: nil, bookmarkDataIsStale: &stale) {
-                    fileURL = resolved
+            if bookmark != nil {
+                let refreshed = SecurityScopedFile.refreshBookmark(bookmark, fallbackURL: fileURL)
+                fileURL = refreshed.url
+                if let fresh = refreshed.bookmark { bookmark = fresh }
+            }
+            if directoryBookmark != nil {
+                let dirURL = fileURL?.deletingLastPathComponent()
+                if let fresh = SecurityScopedFile.refreshBookmark(directoryBookmark, fallbackURL: dirURL).bookmark {
+                    directoryBookmark = fresh
                 }
             }
 

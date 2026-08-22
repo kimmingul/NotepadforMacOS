@@ -6,107 +6,252 @@ struct HTMLPreviewResult: Equatable {
     var containsLocalResources: Bool
 }
 
-/// Static HTML preview: no scripts, no frames. Images and stylesheets go through
-/// the existing custom scheme + folder/remote allow policy.
-nonisolated enum HTMLPreviewSanitizer {
+enum PreviewChrome {
+    static let contentSecurityPolicy =
+        "default-src 'none'; img-src notepad-md:; style-src 'unsafe-inline' notepad-md:; script-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';"
+}
+
+/// Static HTML preview: parse with Foundation's HTML tidy, emit an allowlist.
+/// Scripts, frames, forms, and event handlers are dropped. Images/CSS go through
+/// the custom scheme + folder/remote allow policy.
+enum HTMLPreviewSanitizer {
+    private static let allowed: Set<String> = [
+        "p", "div", "span", "br", "hr",
+        "h1", "h2", "h3", "h4", "h5", "h6",
+        "ul", "ol", "li", "dl", "dt", "dd",
+        "blockquote", "pre", "code",
+        "em", "strong", "b", "i", "u", "s", "sub", "sup", "small", "mark",
+        "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption", "colgroup", "col",
+        "a", "img", "figure", "figcaption",
+        "header", "footer", "main", "article", "section", "nav", "aside", "address",
+        "style", "link"
+    ]
+
+    private static let dropSubtree: Set<String> = [
+        "script", "iframe", "object", "embed", "applet",
+        "form", "input", "button", "textarea", "select", "option", "optgroup",
+        "meta", "base", "svg", "math", "video", "audio", "source", "track",
+        "canvas", "frame", "frameset", "template", "noscript"
+    ]
+
+    private static let voidElements: Set<String> = ["br", "hr", "img", "col", "link"]
+
     static func sanitize(_ source: String, allowsRemote: Bool) -> HTMLPreviewResult {
-        var html = source
         var remote = false
         var local = false
-
-        html = stripBlocks(html, tag: "script")
-        html = stripBlocks(html, tag: "iframe")
-        html = stripBlocks(html, tag: "object")
-        html = stripBlocks(html, tag: "embed")
-        html = stripBlocks(html, tag: "applet")
-        html = stripBlocks(html, tag: "form")
-        html = stripEmpty(html, tag: "meta")
-        html = stripEmpty(html, tag: "base")
-        html = stripEventHandlers(html)
-        html = rewriteLinkTags(html, allowsRemote: allowsRemote, remote: &remote, local: &local)
-        html = rewriteAttribute(html, name: "src", allowsRemote: allowsRemote, remote: &remote, local: &local)
-        html = rewriteCSSURLs(html, allowsRemote: allowsRemote, remote: &remote, local: &local)
-        html = neutralizeDangerousHrefs(html)
-        html = injectCSP(html)
-
+        let fragment: String
+        if let root = parseRoot(source) {
+            fragment = emitChrome(root, allowsRemote: allowsRemote, remote: &remote, local: &local)
+        } else {
+            fragment = "<pre><code>\(escape(source))</code></pre>"
+        }
         return HTMLPreviewResult(
-            html: html,
+            html: wrap(fragment),
             containsRemoteResources: remote,
             containsLocalResources: local
         )
     }
 
-    private static func stripBlocks(_ html: String, tag: String) -> String {
-        let pattern = "<\(tag)\\b[^>]*>[\\s\\S]*?</\(tag)\\s*>|<\(tag)\\b[^>]*/?>"
-        return replace(pattern, in: html, with: "")
+    private static func wrap(_ fragment: String) -> String {
+        """
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta charset="utf-8">
+        <meta http-equiv="Content-Security-Policy" content="\(PreviewChrome.contentSecurityPolicy)">
+        </head>
+        <body>
+        \(fragment)
+        </body>
+        </html>
+        """
     }
 
-    private static func stripEmpty(_ html: String, tag: String) -> String {
-        replace("<\(tag)\\b[^>]*/?>", in: html, with: "")
+    private static func parseRoot(_ source: String) -> XMLElement? {
+        let options: XMLNode.Options = [.documentTidyHTML, .nodeLoadExternalEntitiesNever]
+        if let document = try? XMLDocument(xmlString: source, options: options) {
+            return document.rootElement()
+        }
+        let wrapped = "<html><body>\(source)</body></html>"
+        return (try? XMLDocument(xmlString: wrapped, options: options))?.rootElement()
     }
 
-    private static func stripEventHandlers(_ html: String) -> String {
-        replace("(?i)\\s+on[a-z]+\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\\s>]+)", in: html, with: "")
-    }
-
-    private static func rewriteLinkTags(
-        _ html: String,
+    /// Walk html/head/body wrappers so tidy-moved `<style>` / `<header>` still emit.
+    private static func emitChrome(
+        _ element: XMLElement,
         allowsRemote: Bool,
         remote: inout Bool,
         local: inout Bool
     ) -> String {
-        let regex = try! NSRegularExpression(pattern: "<link\\b[^>]*>", options: .caseInsensitive)
-        let ns = html as NSString
-        var output = html
-        let matches = regex.matches(in: html, range: NSRange(location: 0, length: ns.length)).reversed()
-        for match in matches {
-            let tag = ns.substring(with: match.range)
-            let lower = tag.lowercased()
-            guard lower.contains("stylesheet") else {
-                output = (output as NSString).replacingCharacters(in: match.range, with: "")
-                continue
-            }
-            let rewritten = rewriteAttribute(tag, name: "href", allowsRemote: allowsRemote, remote: &remote, local: &local)
-            output = (output as NSString).replacingCharacters(in: match.range, with: rewritten)
+        let name = element.name?.lowercased() ?? ""
+        if name == "html" || name == "head" || name == "body" {
+            return emitChildren(of: element, allowsRemote: allowsRemote, remote: &remote, local: &local)
         }
-        return output
+        return emit(element, allowsRemote: allowsRemote, remote: &remote, local: &local)
     }
 
-    private static func rewriteAttribute(
-        _ html: String,
+    private static func emit(
+        _ node: XMLNode,
+        allowsRemote: Bool,
+        remote: inout Bool,
+        local: inout Bool
+    ) -> String {
+        switch node.kind {
+        case .text:
+            return escape(node.stringValue ?? "")
+        case .element:
+            guard let element = node as? XMLElement else { return "" }
+            return emitElement(element, allowsRemote: allowsRemote, remote: &remote, local: &local)
+        default:
+            return ""
+        }
+    }
+
+    private static func emitChildren(
+        of element: XMLElement,
+        allowsRemote: Bool,
+        remote: inout Bool,
+        local: inout Bool
+    ) -> String {
+        element.children?.map { emit($0, allowsRemote: allowsRemote, remote: &remote, local: &local) }.joined() ?? ""
+    }
+
+    private static func emitElement(
+        _ element: XMLElement,
+        allowsRemote: Bool,
+        remote: inout Bool,
+        local: inout Bool
+    ) -> String {
+        let name = element.name?.lowercased() ?? ""
+        if dropSubtree.contains(name) { return "" }
+
+        if name == "link" {
+            return emitStylesheet(element, allowsRemote: allowsRemote, remote: &remote, local: &local)
+        }
+
+        guard allowed.contains(name) else {
+            return emitChildren(of: element, allowsRemote: allowsRemote, remote: &remote, local: &local)
+        }
+
+        if name == "style" {
+            let css = rewriteCSS(element.stringValue ?? "", allowsRemote: allowsRemote, remote: &remote, local: &local)
+            return "<style>\(css)</style>"
+        }
+
+        var attributes = ""
+        for attr in element.attributes ?? [] {
+            guard let rawName = attr.name else { continue }
+            let attrName = rawName.lowercased()
+            guard let value = emitAttribute(
+                tag: name,
+                name: attrName,
+                value: attr.stringValue ?? "",
+                allowsRemote: allowsRemote,
+                remote: &remote,
+                local: &local
+            ) else { continue }
+            attributes += " \(attrName)=\"\(escape(value))\""
+        }
+
+        if voidElements.contains(name) {
+            return "<\(name)\(attributes)>"
+        }
+        let inner = emitChildren(of: element, allowsRemote: allowsRemote, remote: &remote, local: &local)
+        return "<\(name)\(attributes)>\(inner)</\(name)>"
+    }
+
+    private static func emitStylesheet(
+        _ element: XMLElement,
+        allowsRemote: Bool,
+        remote: inout Bool,
+        local: inout Bool
+    ) -> String {
+        let rel = element.attribute(forName: "rel")?.stringValue?.lowercased() ?? ""
+        guard rel.contains("stylesheet") else { return "" }
+        let href = element.attribute(forName: "href")?.stringValue ?? ""
+        guard let rewritten = rewriteResource(href, allowsRemote: allowsRemote, remote: &remote, local: &local) else {
+            return ""
+        }
+        return "<link rel=\"stylesheet\" href=\"\(escape(rewritten))\">"
+    }
+
+    private static func emitAttribute(
+        tag: String,
         name: String,
+        value: String,
+        allowsRemote: Bool,
+        remote: inout Bool,
+        local: inout Bool
+    ) -> String? {
+        if name.hasPrefix("on") || name == "srcdoc" || name.contains(":") { return nil }
+
+        switch (tag, name) {
+        case ("a", "href"):
+            return sanitizedLink(value)
+        case ("img", "src"):
+            return rewriteResource(value, allowsRemote: allowsRemote, remote: &remote, local: &local)
+        case ("img", "srcset"):
+            return rewriteSrcset(value, allowsRemote: allowsRemote, remote: &remote, local: &local)
+        case ("img", "alt"), ("img", "title"), ("a", "title"):
+            return value
+        case ("img", "width"), ("img", "height"), ("td", "colspan"), ("th", "colspan"),
+             ("td", "rowspan"), ("th", "rowspan"), ("col", "span"):
+            return value.allSatisfy(\.isNumber) ? value : nil
+        case (_, "class"), (_, "id"), (_, "title"):
+            return value
+        case (_, "style"):
+            return rewriteCSS(value, allowsRemote: allowsRemote, remote: &remote, local: &local)
+        default:
+            return nil
+        }
+    }
+
+    private static func sanitizedLink(_ destination: String) -> String {
+        let trimmed = destination.trimmingCharacters(in: .whitespacesAndNewlines)
+        let lower = trimmed.lowercased()
+        if lower.hasPrefix("https://") || lower.hasPrefix("http://") || lower.hasPrefix("mailto:") {
+            return trimmed
+        }
+        return "#"
+    }
+
+    private static func rewriteSrcset(
+        _ value: String,
         allowsRemote: Bool,
         remote: inout Bool,
         local: inout Bool
     ) -> String {
-        let pattern = "(?i)(\\s\(name)\\s*=\\s*)(\"[^\"]*\"|'[^']*')"
-        let regex = try! NSRegularExpression(pattern: pattern)
-        let ns = html as NSString
-        var output = html
-        let matches = regex.matches(in: html, range: NSRange(location: 0, length: ns.length)).reversed()
-        for match in matches {
-            guard match.numberOfRanges >= 3 else { continue }
-            let raw = ns.substring(with: match.range(at: 2))
-            let quote = String(raw.prefix(1))
-            let value = String(raw.dropFirst().dropLast())
-            let rewritten = rewriteResource(value, allowsRemote: allowsRemote, remote: &remote, local: &local)
-            let prefix = ns.substring(with: match.range(at: 1))
-            let replacement = rewritten.map { "\(prefix)\(quote)\($0)\(quote)" } ?? prefix + quote + quote
-            output = (output as NSString).replacingCharacters(in: match.range, with: replacement)
-        }
+        value.split(separator: ",", omittingEmptySubsequences: false).map { part in
+            let trimmed = part.trimmingCharacters(in: .whitespacesAndNewlines)
+            let tokens = trimmed.split(whereSeparator: \.isWhitespace)
+            guard let first = tokens.first else { return String(part) }
+            let descriptor = tokens.dropFirst().joined(separator: " ")
+            let rewritten = rewriteResource(String(first), allowsRemote: allowsRemote, remote: &remote, local: &local) ?? ""
+            return descriptor.isEmpty ? rewritten : "\(rewritten) \(descriptor)"
+        }.joined(separator: ", ")
+    }
+
+    private static func rewriteCSS(
+        _ css: String,
+        allowsRemote: Bool,
+        remote: inout Bool,
+        local: inout Bool
+    ) -> String {
+        var output = rewriteCSSURLs(css, allowsRemote: allowsRemote, remote: &remote, local: &local)
+        output = rewriteCSSImports(output, allowsRemote: allowsRemote, remote: &remote, local: &local)
         return output
     }
 
     private static func rewriteCSSURLs(
-        _ html: String,
+        _ css: String,
         allowsRemote: Bool,
         remote: inout Bool,
         local: inout Bool
     ) -> String {
         let regex = try! NSRegularExpression(pattern: "url\\(\\s*([\"']?)([^\"')]+)\\1\\s*\\)", options: .caseInsensitive)
-        let ns = html as NSString
-        var output = html
-        let matches = regex.matches(in: html, range: NSRange(location: 0, length: ns.length)).reversed()
+        let ns = css as NSString
+        var output = css
+        let matches = regex.matches(in: css, range: NSRange(location: 0, length: ns.length)).reversed()
         for match in matches {
             guard match.numberOfRanges >= 3 else { continue }
             let value = ns.substring(with: match.range(at: 2)).trimmingCharacters(in: .whitespacesAndNewlines)
@@ -117,12 +262,27 @@ nonisolated enum HTMLPreviewSanitizer {
         return output
     }
 
-    private static func neutralizeDangerousHrefs(_ html: String) -> String {
-        replace(
-            "(?i)(\\shref\\s*=\\s*)([\"'])\\s*(javascript:|data:|file:)[^\"']*\\2",
-            in: html,
-            with: "$1$2#$2"
+    private static func rewriteCSSImports(
+        _ css: String,
+        allowsRemote: Bool,
+        remote: inout Bool,
+        local: inout Bool
+    ) -> String {
+        let regex = try! NSRegularExpression(
+            pattern: "@import\\s+(?!url\\()[\"']([^\"']+)[\"']",
+            options: .caseInsensitive
         )
+        let ns = css as NSString
+        var output = css
+        let matches = regex.matches(in: css, range: NSRange(location: 0, length: ns.length)).reversed()
+        for match in matches {
+            guard match.numberOfRanges >= 2 else { continue }
+            let value = ns.substring(with: match.range(at: 1))
+            let rewritten = rewriteResource(value, allowsRemote: allowsRemote, remote: &remote, local: &local)
+            let replacement = rewritten.map { "@import '\($0)'" } ?? "@import ''"
+            output = (output as NSString).replacingCharacters(in: match.range, with: replacement)
+        }
+        return output
     }
 
     private static func rewriteResource(
@@ -144,19 +304,11 @@ nonisolated enum HTMLPreviewSanitizer {
         }
     }
 
-    private static func injectCSP(_ html: String) -> String {
-        let csp = #"<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src notepad-md:; style-src 'unsafe-inline' notepad-md:; script-src 'none'; frame-src 'none'; object-src 'none';">"#
-        if let range = html.range(of: "<head", options: .caseInsensitive),
-           let close = html[range.lowerBound...].firstIndex(of: ">") {
-            let insertAt = html.index(after: close)
-            return String(html[..<insertAt]) + csp + String(html[insertAt...])
-        }
-        return csp + html
-    }
-
-    private static func replace(_ pattern: String, in html: String, with template: String) -> String {
-        let regex = try! NSRegularExpression(pattern: pattern, options: .caseInsensitive)
-        let range = NSRange(location: 0, length: (html as NSString).length)
-        return regex.stringByReplacingMatches(in: html, range: range, withTemplate: template)
+    private static func escape(_ text: String) -> String {
+        text
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
     }
 }

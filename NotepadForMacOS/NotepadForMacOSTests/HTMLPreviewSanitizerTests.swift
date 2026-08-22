@@ -56,6 +56,57 @@ final class HTMLPreviewSanitizerTests: XCTestCase {
         XCTAssertTrue(result.html.contains("notepad-md://"))
         XCTAssertFalse(result.html.contains("url(./bg.png)"))
     }
+
+    func testOwnsPreviewDocumentAndPlacesCSPInHead() {
+        let result = HTMLPreviewSanitizer.sanitize(
+            #"<body><header>Invoice Header</header><p>Hi</p></body>"#,
+            allowsRemote: false
+        )
+        XCTAssertTrue(result.html.hasPrefix("<!DOCTYPE html>"))
+        XCTAssertTrue(result.html.contains("<head>"))
+        XCTAssertTrue(result.html.contains("Content-Security-Policy"))
+        XCTAssertTrue(result.html.contains("Invoice"))
+        XCTAssertTrue(result.html.contains("Hi"))
+        if let body = result.html.range(of: "<body"),
+           let csp = result.html.range(of: "Content-Security-Policy") {
+            XCTAssertTrue(csp.lowerBound < body.lowerBound, "CSP must live in the app-owned <head>")
+        } else {
+            XCTFail("expected body and CSP meta")
+        }
+    }
+
+    func testRewritesSrcsetAndUnquotedRemoteSources() {
+        let html = #"<header></header><img src=https://attacker.example/t.png srcset="https://attacker.example/t.png 1x">"#
+        let result = HTMLPreviewSanitizer.sanitize(html, allowsRemote: false)
+        XCTAssertTrue(result.containsRemoteResources)
+        XCTAssertFalse(result.html.contains("https://attacker.example"))
+    }
+
+    func testRewritesCSSImportAndNestedTags() {
+        let html = #"<style>@import "https://cdn.example/x.css";</style><scr<script></script>ipt>alert(1)</script><met<meta>a http-equiv="refresh" content="0;url=https://x">"#
+        let result = HTMLPreviewSanitizer.sanitize(html, allowsRemote: false)
+        XCTAssertFalse(result.html.contains("<script"))
+        XCTAssertFalse(result.html.contains("http-equiv=\"refresh\""))
+        XCTAssertFalse(result.html.contains("@import \"https://"))
+        XCTAssertFalse(result.html.contains("https://cdn.example"))
+    }
+
+    func testStripsSlashStyleEventHandlers() {
+        let html = #"<img/onerror=alert(1) src="./x.png">"#
+        let result = HTMLPreviewSanitizer.sanitize(html, allowsRemote: false)
+        XCTAssertFalse(result.html.contains("onerror"))
+        XCTAssertTrue(result.html.contains("notepad-md://"))
+    }
+
+    func testKeepsHttpLinksAndUnwrapsUnknownTags() {
+        let html = #"<font>Hi <a href="https://example.com">site</a></font><custom><em>x</em></custom>"#
+        let result = HTMLPreviewSanitizer.sanitize(html, allowsRemote: false)
+        XCTAssertTrue(result.html.contains("href=\"https://example.com\""))
+        XCTAssertFalse(result.html.contains("<font"))
+        XCTAssertFalse(result.html.contains("<custom"))
+        XCTAssertTrue(result.html.contains("<em>x</em>"))
+        XCTAssertTrue(result.html.contains("Hi"))
+    }
 }
 
 final class PreviewDocumentKindTests: XCTestCase {

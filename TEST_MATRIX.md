@@ -127,6 +127,7 @@ Full matrix + results logged in ledger for G008.
 - Settings / Help → Show Welcome again: sheet appears **immediately** (while Settings is key), does **not** flip `hasSeenWelcome` to false for next launch.
 - Upgrade path (v1.0 install → 1.1.0): pre-v1.1 evidence seeds `hasSeenWelcome=true`, `lastSeen=1.0` → **What's New** (not Welcome) once; Help can re-open.
 - Upgrade path (v1.1.0 → 1.2.0): `lastSeen=1.1.0` → **What's New** with five 1.2 bullets (preview, highlight, remote, browser, toggle).
+- Upgrade path (v1.2.1 → 1.2.2): `lastSeen=1.2.1` → **What's New** with five 1.2.2 bullets (parser, scheme, remote, bookmarks, IME).
 - Fresh 1.2 install (no App Support / no legacy defaults): Welcome only, not What's New.
 
 **Test 5.7 Regression with spelling on**
@@ -155,7 +156,10 @@ Full matrix + results logged in ledger for G008.
 - Local `![](./x.png)`: after Allow Folder Access, image shows.
 - `![](../outside.png)`: never shown.
 - Remote `![](https://…)`: placeholder until Allow Remote Images; then loads; close tab and reopen → blocked again.
-- HTML: `<script>`, `javascript:`, `onclick`, remote `<img>` / `<link rel=stylesheet>` blocked until allow; then images/CSS only, still no script.
+- HTML: parsed with Foundation HTML tidy + tag allowlist. `<script>`, forms, frames, `on*` dropped. Remote `<img>` / stylesheet blocked until allow.
+- Preview HTML is always an app-owned document with CSP in `<head>`.
+- Custom scheme is resource-only: main-frame `notepad-md://img` is cancelled; local `.html` / `.md` / `.svg` are not served.
+- Remote fetch stays on public `https`, rejects private/loopback hostnames and resolved IPs, 8MB cap.
 - WebView does not navigate to `https://` directly.
 
 **Test 6.5 Browser**

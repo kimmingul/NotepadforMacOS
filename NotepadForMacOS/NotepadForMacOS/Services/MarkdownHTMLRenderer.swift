@@ -36,6 +36,7 @@ enum MarkdownHTMLRenderer {
         <html>
         <head>
         <meta charset="utf-8">
+        <meta http-equiv="Content-Security-Policy" content="\(PreviewChrome.contentSecurityPolicy)">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
         :root { color-scheme: \(isDark ? "dark" : "light"); }

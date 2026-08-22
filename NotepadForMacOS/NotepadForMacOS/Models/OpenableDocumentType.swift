@@ -2,7 +2,7 @@ import Foundation
 import UniformTypeIdentifiers
 
 /// Files this app will open from Finder, Dock drops, and in-window drops.
-enum OpenableDocumentType {
+nonisolated enum OpenableDocumentType {
     static let filenameExtensions: Set<String> = [
         "txt", "text", "md", "markdown", "log", "json", "xml", "html", "htm"
     ]
