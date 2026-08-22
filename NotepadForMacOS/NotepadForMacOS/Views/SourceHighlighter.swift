@@ -92,22 +92,22 @@ enum SourceHighlighter {
     private static func fenceRanges(in ns: NSString) -> [NSRange] {
         var ranges: [NSRange] = []
         var index = 0
-        var open: Int?
+        var open: (start: Int, fence: MarkdownFence.Open)?
         while index < ns.length {
             let line = ns.lineRange(for: NSRange(location: index, length: 0))
             let trimmed = ns.substring(with: line).trimmingCharacters(in: .whitespacesAndNewlines)
-            if trimmed.hasPrefix("```") {
-                if let start = open {
-                    ranges.append(NSRange(location: start, length: NSMaxRange(line) - start))
+            if let current = open {
+                if MarkdownFence.isClosing(trimmed, of: current.fence) {
+                    ranges.append(NSRange(location: current.start, length: NSMaxRange(line) - current.start))
                     open = nil
-                } else {
-                    open = line.location
                 }
+            } else if let fence = MarkdownFence.opening(of: trimmed) {
+                open = (line.location, fence)
             }
             index = NSMaxRange(line)
         }
-        if let start = open {
-            ranges.append(NSRange(location: start, length: ns.length - start))
+        if let current = open {
+            ranges.append(NSRange(location: current.start, length: ns.length - current.start))
         }
         return ranges
     }

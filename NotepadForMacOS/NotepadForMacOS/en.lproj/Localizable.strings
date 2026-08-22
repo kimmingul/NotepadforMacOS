@@ -148,6 +148,9 @@
 "whatsNew.1_2.remote" = "Remote images and CSS load only after you allow them for that tab. Scripts never run.";
 "whatsNew.1_2.browser" = "Open the current file in your default browser.";
 "whatsNew.1_2.toggle" = "The preview button stays visible next to + and appearance while the pane is open.";
+"whatsNew.1_2_1.comments" = "HTML comments are hidden in preview instead of showing as code.";
+"whatsNew.1_2_1.fences" = "Fenced code blocks follow GFM: closing backticks must match, language is the first token.";
+
 
 
 /* Markdown preview */
