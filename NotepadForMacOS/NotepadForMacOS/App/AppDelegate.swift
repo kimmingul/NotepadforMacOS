@@ -9,13 +9,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 앱이 종료 절차에 들어갔는지 여부. 창 닫힘(onDisappear)보다 먼저 설정되도록
     /// `applicationShouldTerminate`에서 켠다.
     static private(set) var isTerminating = false
-    static private(set) var launchSettled = false
-
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        DispatchQueue.main.async {
-            AppDelegate.launchSettled = true
-        }
-    }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         AppDelegate.isTerminating = true
@@ -23,10 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        AppTerminatePolicy.shouldQuitAfterLastWindow(
-            hasPendingDocuments: ExternalDocumentOpener.hasPending,
-            launchSettled: AppDelegate.launchSettled
-        )
+        true
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {

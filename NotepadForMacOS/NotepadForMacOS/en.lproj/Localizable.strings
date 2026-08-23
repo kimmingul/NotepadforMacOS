@@ -159,8 +159,6 @@
 "whatsNew.1_2_3.picker" = "Settings → Language. Names stay in their own script so you can find yours.";
 "whatsNew.1_2_3.system" = "Default follows this Mac’s language.";
 "whatsNew.1_2_3.relaunch" = "Changing the language relaunches Notepad.";
-"whatsNew.1_2_4.openWith" = "Finder Open With and “always open with” no longer quit the app before the file is delivered.";
-"whatsNew.1_2_4.defaultApp" = "The installed app now carries its own notarization ticket for document launches.";
 
 
 
