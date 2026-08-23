@@ -142,13 +142,49 @@ fix_app_icon() {
   # code signature ("a sealed resource is missing or invalid"), which prevents a
   # sandboxed app from launching. Re-sign (ad-hoc) with the real entitlements.
   # The Developer ID path in do_dist re-signs again afterward.
-  if codesign --force --options runtime \
+  #
+  # Two things have to be right or the app dies milliseconds after launch:
+  #
+  # 1. Nested Mach-O first, outermost last. Debug builds keep the app's code in
+  #    Contents/MacOS/Notepad.debug.dylib next to a small launcher executable, and
+  #    Xcode signs it with the development identity. Re-signing only the bundle leaves
+  #    that dylib on a different identity.
+  # 2. No `--options runtime` for an ad-hoc signature. Hardened runtime turns on library
+  #    validation, which only accepts libraries from the same team — and ad-hoc code has
+  #    no team, so the loader rejects its own dylib:
+  #      "code signature ... not valid for use in process: mapping process and mapped
+  #       file (non-platform) have different Team IDs"
+  #    Hardened runtime belongs on the distribution build, where do_dist re-signs with
+  #    the Developer ID identity (a real team) and passes `--options runtime`.
+  local nested_failed=0
+  local nested
+  while IFS= read -r nested; do
+    [[ -n "$nested" ]] || continue
+    if ! codesign --force --sign - "$nested" >/dev/null 2>&1; then
+      warn "Re-sign failed for $(basename "$nested")"
+      nested_failed=1
+    fi
+  done < <(find "$app_path/Contents" \
+             \( -name '*.dylib' -o -name '*.so' -o -name '*.framework' \) \
+             -print 2>/dev/null | sort -r)
+
+  if codesign --force \
        --entitlements "$SCRIPT_DIR/NotepadForMacOS/Notepad.entitlements" \
        --sign - "$app_path" >/dev/null 2>&1; then
     success "Re-signed bundle (ad-hoc) after icon fix"
   else
     warn "Re-sign after icon fix failed"
+    nested_failed=1
   fi
+
+  # A bundle that cannot pass its own signature check will not launch. Catch it here
+  # instead of at runtime.
+  if ! codesign --verify --deep --strict "$app_path" >/dev/null 2>&1; then
+    error "Signature verification failed after icon fix — the app would crash on launch"
+    codesign --verify --deep --strict "$app_path" 2>&1 | sed 's/^/  /' | head -5
+    return 1
+  fi
+  [[ "$nested_failed" -eq 0 ]] || warn "Some nested components were not re-signed"
 }
 
 build_target() {
@@ -244,6 +280,25 @@ do_dist() {
     warn "DEVID_APP not set — keeping ad-hoc signature (Gatekeeper will warn on other Macs)."
   fi
 
+  # Notarize and staple the .app **before** it goes into the DMG.
+  #
+  # `stapler staple` on the DMG only attaches a ticket to the disk image. The copy the
+  # user drags into /Applications carries no ticket of its own, so its first launch needs
+  # an online Gatekeeper lookup. Stapling the app itself makes that check work offline.
+  # Notarization requires a zip (notarytool rejects a bare bundle).
+  if [[ -n "${DEVID_APP:-}" && -n "${NOTARY_PROFILE:-}" ]]; then
+    local app_zip="$BUILD_DIR/Notepad-app-notarize.zip"
+    info "Submitting the app for notarization (profile: $NOTARY_PROFILE)..."
+    rm -f "$app_zip"
+    /usr/bin/ditto -c -k --keepParent "$app_path" "$app_zip"
+    xcrun notarytool submit "$app_zip" --keychain-profile "$NOTARY_PROFILE" --wait
+    rm -f "$app_zip"
+    info "Stapling ticket to the app..."
+    xcrun stapler staple "$app_path"
+    xcrun stapler validate "$app_path"
+    success "Notarized + stapled: $app_path"
+  fi
+
   info "Creating $dmg_path"
   rm -f "$dmg_path"
   local staging="/tmp/NotepadDist.$$"
@@ -254,13 +309,14 @@ do_dist() {
   rm -rf "$staging"
   success "Created $dmg_path"
 
-  # Notarize (optional) — needs $NOTARY_PROFILE stored via `xcrun notarytool store-credentials`
+  # Notarize the disk image too, so the download itself is stapled.
+  # Needs $NOTARY_PROFILE stored via `xcrun notarytool store-credentials`.
   if [[ -n "${DEVID_APP:-}" && -n "${NOTARY_PROFILE:-}" ]]; then
-    info "Submitting for notarization (profile: $NOTARY_PROFILE)..."
+    info "Submitting the DMG for notarization (profile: $NOTARY_PROFILE)..."
     xcrun notarytool submit "$dmg_path" --keychain-profile "$NOTARY_PROFILE" --wait
-    info "Stapling ticket..."
+    info "Stapling ticket to the DMG..."
     xcrun stapler staple "$dmg_path"
-    success "Notarized + stapled: $dmg_path"
+    success "Notarized + stapled (app and DMG): $dmg_path"
   else
     echo ""
     echo "To produce a Gatekeeper-friendly build, set:"

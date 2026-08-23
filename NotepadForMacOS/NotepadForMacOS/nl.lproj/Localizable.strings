@@ -169,3 +169,5 @@
 "whatsNew.1_2_3.picker" = "Instellingen → Taal. Namen blijven in hun eigen schrift, zodat je de jouwe vindt.";
 "whatsNew.1_2_3.system" = "Standaard volgt de taal van deze Mac.";
 "whatsNew.1_2_3.relaunch" = "Taal wijzigen herstart Notepad.";
+"whatsNew.1_2_4.gatekeeper" = "Een bestand openen vanuit de Finder toont niet meer het Gatekeeper-controlevenster.";
+"whatsNew.1_2_4.readonly" = "Een document openen leest het alleen. Notepad schrijft alleen naar je bestand bij opslaan.";

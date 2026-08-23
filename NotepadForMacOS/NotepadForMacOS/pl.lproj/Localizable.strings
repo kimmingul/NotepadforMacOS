@@ -169,3 +169,5 @@
 "whatsNew.1_2_3.picker" = "Ustawienia → Język. Nazwy zostają w swoim piśmie, żeby łatwiej znaleźć swój.";
 "whatsNew.1_2_3.system" = "Domyślnie język tego Maca.";
 "whatsNew.1_2_3.relaunch" = "Zmiana języka uruchamia Notepad ponownie.";
+"whatsNew.1_2_4.gatekeeper" = "Otwieranie pliku z Findera nie wyświetla już okna sprawdzania Gatekeeper.";
+"whatsNew.1_2_4.readonly" = "Otwarcie dokumentu tylko go czyta. Notepad zapisuje do pliku wyłącznie przy zapisywaniu.";

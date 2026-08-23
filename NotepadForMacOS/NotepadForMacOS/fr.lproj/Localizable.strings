@@ -169,3 +169,5 @@
 "whatsNew.1_2_3.picker" = "Réglages → Langue. Les noms restent dans leur écriture d’origine.";
 "whatsNew.1_2_3.system" = "Par défaut, suit la langue de ce Mac.";
 "whatsNew.1_2_3.relaunch" = "Changer de langue relance Notepad.";
+"whatsNew.1_2_4.gatekeeper" = "L’ouverture d’un fichier depuis le Finder ne déclenche plus la boîte de dialogue Gatekeeper.";
+"whatsNew.1_2_4.readonly" = "Ouvrir un document se contente de le lire. Notepad n’écrit dans le fichier qu’à l’enregistrement.";

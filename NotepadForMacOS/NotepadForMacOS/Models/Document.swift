@@ -11,8 +11,13 @@ struct Document: Identifiable, Equatable, Sendable {
     var fileURL: URL?
 
     /// 샌드박스에서 재실행 후에도 `fileURL`에 접근하기 위한 앱 스코프 보안 북마크.
-    /// 파일을 열거나 저장할 때 생성하며, 세션에 함께 저장된다.
+    /// 문서를 열 때는 **읽기 전용**으로 만들고(쓰기 가능 북마크를 만들면 문서에 격리 속성이
+    /// 전파된다), 저장이 성공한 뒤에만 쓰기 가능으로 승급한다. 세션에 함께 저장된다.
     var securityScopedBookmark: Data?
+
+    /// `securityScopedBookmark`가 쓰기 가능한 스코프 토큰인지 여부.
+    /// false면 재실행 후 이 문서를 덮어쓸 권한이 없으므로 저장 시 재승인이 필요하다.
+    var bookmarkAllowsWriting: Bool = false
 
     /// Parent-folder bookmark so sibling images can be read after relaunch.
     var directoryBookmark: Data?
@@ -59,6 +64,7 @@ struct Document: Identifiable, Equatable, Sendable {
 
     init(fileURL: URL? = nil,
          securityScopedBookmark: Data? = nil,
+         bookmarkAllowsWriting: Bool = false,
          directoryBookmark: Data? = nil,
          content: String = "",
          encoding: TextEncoding = .utf8,
@@ -66,6 +72,7 @@ struct Document: Identifiable, Equatable, Sendable {
          isDirty: Bool = false) {
         self.fileURL = fileURL
         self.securityScopedBookmark = securityScopedBookmark
+        self.bookmarkAllowsWriting = bookmarkAllowsWriting
         self.directoryBookmark = directoryBookmark
         self.content = content
         self.encoding = encoding
@@ -79,7 +86,11 @@ struct Document: Identifiable, Equatable, Sendable {
     mutating func reloadFromDisk(using newEncoding: TextEncoding) -> Bool {
         guard let url = fileURL else { return false }
         var didReload = false
-        SecurityScopedFile.access(url, bookmark: securityScopedBookmark) { resolvedURL in
+        SecurityScopedFile.access(
+            url,
+            bookmark: securityScopedBookmark,
+            readOnly: !bookmarkAllowsWriting
+        ) { resolvedURL in
             guard let data = try? Data(contentsOf: resolvedURL),
                   let newContent = newEncoding.decode(data: data) else { return }
             content = newContent

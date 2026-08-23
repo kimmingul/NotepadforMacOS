@@ -169,3 +169,5 @@
 "whatsNew.1_2_3.picker" = "Einstellungen → Sprache. Namen bleiben in ihrer eigenen Schrift, damit Sie Ihre finden.";
 "whatsNew.1_2_3.system" = "Standard folgt der Sprache dieses Macs.";
 "whatsNew.1_2_3.relaunch" = "Eine Sprachänderung startet Notepad neu.";
+"whatsNew.1_2_4.gatekeeper" = "Das Öffnen einer Datei im Finder löst keinen Gatekeeper-Prüfdialog mehr aus.";
+"whatsNew.1_2_4.readonly" = "Beim Öffnen wird ein Dokument nur gelesen. Geschrieben wird nur beim Speichern.";

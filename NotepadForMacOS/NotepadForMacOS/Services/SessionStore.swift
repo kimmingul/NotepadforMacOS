@@ -118,7 +118,12 @@ final class SessionStore: ObservableObject {
                 "createdAt": tab.createdAt.timeIntervalSince1970
             ]
             if let path = tab.filePath { info["filePath"] = path }
-            if let bookmark = tab.bookmark { info["bookmark"] = bookmark.base64EncodedString() }
+            if let bookmark = tab.bookmark {
+                info["bookmark"] = bookmark.base64EncodedString()
+                // 북마크가 쓰기 가능한지 함께 남긴다. 복원 후 저장 시 이 값으로
+                // 바로 쓸 수 있는지, 재승인이 필요한지 판단한다.
+                info["bookmarkWritable"] = tab.bookmarkWritable
+            }
             if let dirBookmark = tab.directoryBookmark { info["directoryBookmark"] = dirBookmark.base64EncodedString() }
 
             let contentURL = dir.appendingPathComponent("\(tab.id.uuidString).txt")
@@ -174,6 +179,8 @@ final class SessionStore: ObservableObject {
             let hasContentFile = info["hasContentFile"] as? Bool ?? false
             var bookmark: Data?
             if let b64 = info["bookmark"] as? String { bookmark = Data(base64Encoded: b64) }
+            // 예전 세션(이 키가 없던 버전)은 쓰기 가능 북마크를 저장했으므로 true로 본다.
+            let bookmarkWritable = (info["bookmarkWritable"] as? Bool) ?? (bookmark != nil)
             var directoryBookmark: Data?
             if let b64 = info["directoryBookmark"] as? String { directoryBookmark = Data(base64Encoded: b64) }
 
@@ -181,7 +188,11 @@ final class SessionStore: ObservableObject {
             if let path = info["filePath"] as? String { fileURL = URL(fileURLWithPath: path) }
             // 북마크가 있으면 그쪽이 더 신뢰할 수 있는 위치 (샌드박스 접근 보존)
             if bookmark != nil {
-                let refreshed = SecurityScopedFile.refreshBookmark(bookmark, fallbackURL: fileURL)
+                let refreshed = SecurityScopedFile.refreshBookmark(
+                    bookmark,
+                    fallbackURL: fileURL,
+                    readOnly: !bookmarkWritable
+                )
                 fileURL = refreshed.url
                 if let fresh = refreshed.bookmark { bookmark = fresh }
             }
@@ -202,7 +213,7 @@ final class SessionStore: ObservableObject {
             } else if let url = fileURL {
                 // clean 파일 기반 탭 → 디스크에서 보안 스코프 접근으로 읽기
                 var read: String?
-                SecurityScopedFile.access(url, bookmark: bookmark) { resolved in
+                SecurityScopedFile.access(url, bookmark: bookmark, readOnly: !bookmarkWritable) { resolved in
                     if let data = try? Data(contentsOf: resolved) {
                         read = encoding.decode(data: data) ?? String(data: data, encoding: .utf8)
                     }
@@ -218,6 +229,7 @@ final class SessionStore: ObservableObject {
             var doc = Document(
                 fileURL: fileURL,
                 securityScopedBookmark: bookmark,
+                bookmarkAllowsWriting: bookmarkWritable && bookmark != nil,
                 directoryBookmark: directoryBookmark,
                 content: content,
                 encoding: encoding,
@@ -316,6 +328,7 @@ private struct TabSnapshot: Sendable {
     let id: UUID
     let filePath: String?
     let bookmark: Data?
+    let bookmarkWritable: Bool
     let directoryBookmark: Data?
     let encoding: String
     let lineEnding: String
@@ -328,6 +341,7 @@ private struct TabSnapshot: Sendable {
         id = doc.id
         filePath = doc.fileURL?.path
         bookmark = doc.securityScopedBookmark
+        bookmarkWritable = doc.bookmarkAllowsWriting
         directoryBookmark = doc.directoryBookmark
         encoding = doc.encoding.rawValue
         lineEnding = doc.lineEnding.rawValue

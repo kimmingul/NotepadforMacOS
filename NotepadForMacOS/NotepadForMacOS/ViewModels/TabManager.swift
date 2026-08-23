@@ -3,6 +3,21 @@ import SwiftUI
 import Combine
 import AppKit
 
+/// 저장 시도 결과. 실패 원인을 구분해야 호출 측이 알림과 재승인 패널을 올바르게 고를 수 있다.
+enum SaveOutcome: Equatable {
+    /// 디스크에 기록 완료.
+    case saved
+    /// 저장할 경로가 없음 → 호출 측에서 Save As 패널이 필요.
+    case noTarget
+    /// 선택한 인코딩으로 표현할 수 없는 문자가 있음.
+    case encodingFailed
+    /// 이 파일에 쓸 권한이 없음(문서를 열 때 만든 읽기 전용 북마크만 있는 상태).
+    /// 호출 측에서 같은 경로로 저장 패널을 띄워 사용자가 한 번 승인하면 이후로는 직접 저장된다.
+    case notAuthorized
+    /// 권한은 있으나 디스크 기록이 실패.
+    case writeFailed
+}
+
 struct EditorCommand: Equatable {
     let id = UUID()
     let documentID: UUID
@@ -212,8 +227,12 @@ final class TabManager: ObservableObject {
             return true
         }
 
-        // 재실행 후에도 접근하기 위해 보안 스코프 북마크를 생성(권한이 있는 현재 URL 기준).
-        let bookmark = SecurityScopedFile.makeBookmark(for: url)
+        // 재실행 후에도 **읽을** 수 있도록 읽기 전용 보안 스코프 북마크를 만든다.
+        // 여기서 쓰기 가능 북마크를 만들면 Foundation이 문서를 open(O_RDWR)로 열고,
+        // App Sandbox가 그 쓰기 의도 open에 com.apple.quarantine을 전파한다(내용/mtime은
+        // 그대로인데 격리만 붙어 이후 Finder 열기마다 Gatekeeper 대화상자가 뜬다).
+        // 쓰기 가능 북마크는 실제 저장이 성공한 뒤에만 만든다(saveTab 참고).
+        let bookmark = SecurityScopedFile.makeBookmark(for: url, readOnly: true)
         guard let data = try? Data(contentsOf: url) else { return false }
 
         let encoding = preferredEncoding ?? TextEncoding.detect(from: data)
@@ -236,23 +255,19 @@ final class TabManager: ObservableObject {
 
     /// 현재 선택 탭 저장
     @discardableResult
-    func saveCurrentTab(to url: URL? = nil) -> Bool {
+    func saveCurrentTab(to url: URL? = nil) -> SaveOutcome {
         guard let id = selectedTabID,
-              let index = tabs.firstIndex(where: { $0.id == id }) else { return false }
+              let index = tabs.firstIndex(where: { $0.id == id }) else { return .noTarget }
 
         return saveTab(id, to: url, encoding: tabs[index].encoding, lineEnding: tabs[index].lineEnding)
     }
 
     @discardableResult
-    func saveTab(_ id: UUID, to url: URL? = nil, encoding: TextEncoding? = nil, lineEnding: LineEnding? = nil) -> Bool {
-        guard let index = tabs.firstIndex(where: { $0.id == id }) else { return false }
+    func saveTab(_ id: UUID, to url: URL? = nil, encoding: TextEncoding? = nil, lineEnding: LineEnding? = nil) -> SaveOutcome {
+        guard let index = tabs.firstIndex(where: { $0.id == id }) else { return .noTarget }
 
-        let targetURL = url ?? tabs[index].fileURL
-
-        if targetURL == nil {
-            // Save As 필요 — 호출 측에서 패널 띄워야 함
-            return false
-        }
+        // Save As가 필요한 경우(대상 없음)는 호출 측에서 패널을 띄운다.
+        guard let destination = url ?? tabs[index].fileURL else { return .noTarget }
 
         if let encoding {
             tabs[index].encoding = encoding
@@ -266,32 +281,50 @@ final class TabManager: ObservableObject {
 
         guard let data = doc.encoding.encode(normalizedContent) else {
             // 선택한 인코딩으로 표현할 수 없는 문자가 있음 (호출 측에서 알림 표시)
-            return false
+            return .encodingFailed
         }
 
-        guard let destination = targetURL else { return false }
         let isNewTarget = (url != nil && url != doc.fileURL)
 
-        // 기존 파일 재저장은 보안 스코프 북마크로 접근; Save As(새 URL)는 패널이 권한 부여.
+        // 쓰기 경로 선택:
+        // - Save As(새 URL)이거나 북마크가 없으면 패널/Launch Services가 이번 실행에 부여한
+        //   권한으로 직접 쓴다.
+        // - 쓰기 가능 북마크가 있으면 그 스코프를 열고 쓴다(재실행 후에도 유효).
+        // - 읽기 전용 북마크만 있으면(문서를 열었고 아직 한 번도 저장하지 않은 상태) 이번 실행에
+        //   남아 있는 권한으로 직접 시도한다. 재실행 이후라면 권한이 없어 실패하고,
+        //   .notAuthorized로 호출 측이 재승인 패널을 띄운다.
         var wrote = false
         if isNewTarget || doc.securityScopedBookmark == nil {
             wrote = ((try? data.write(to: destination, options: .atomic)) != nil)
-        } else {
-            SecurityScopedFile.access(destination, bookmark: doc.securityScopedBookmark) { resolved in
+        } else if doc.bookmarkAllowsWriting {
+            SecurityScopedFile.access(
+                destination,
+                bookmark: doc.securityScopedBookmark,
+                readOnly: false
+            ) { resolved in
                 wrote = ((try? data.write(to: resolved, options: .atomic)) != nil)
             }
+        } else {
+            wrote = ((try? data.write(to: destination, options: .atomic)) != nil)
         }
-        guard wrote else { return false }
+        guard wrote else {
+            return doc.bookmarkAllowsWriting ? .writeFailed : .notAuthorized
+        }
 
         tabs[index].fileURL = destination
         tabs[index].isDirty = false
         tabs[index].loadError = false
-        // 새 위치이거나 북마크가 없으면 재실행 후 접근을 위해 북마크 생성/갱신
-        if isNewTarget || tabs[index].securityScopedBookmark == nil {
-            tabs[index].securityScopedBookmark = SecurityScopedFile.makeBookmark(for: destination)
+        // 저장이 성공한 이 시점에는 이미 이 파일에 쓰기 권한이 있다. 그러므로 지금 쓰기 가능
+        // 북마크로 승급해도 새로 격리를 유발하지 않는다(방금 우리가 파일을 기록했다).
+        // 문서를 여는 시점에 이걸 만들면 안 되는 이유는 makeBookmark 주석 참고.
+        if isNewTarget || !tabs[index].bookmarkAllowsWriting {
+            if let writable = SecurityScopedFile.makeBookmark(for: destination, readOnly: false) {
+                tabs[index].securityScopedBookmark = writable
+                tabs[index].bookmarkAllowsWriting = true
+            }
         }
         persistSession()
-        return true
+        return .saved
     }
 
     // MARK: - Encoding features (요청 핵심 기능)

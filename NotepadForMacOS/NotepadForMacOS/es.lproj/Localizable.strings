@@ -169,3 +169,5 @@
 "whatsNew.1_2_3.picker" = "Ajustes → Idioma. Los nombres quedan en su propia escritura para que los encuentres.";
 "whatsNew.1_2_3.system" = "Por defecto sigue el idioma de este Mac.";
 "whatsNew.1_2_3.relaunch" = "Cambiar el idioma vuelve a abrir Notepad.";
+"whatsNew.1_2_4.gatekeeper" = "Abrir un archivo desde el Finder ya no muestra el diálogo de comprobación de Gatekeeper.";
+"whatsNew.1_2_4.readonly" = "Abrir un documento solo lo lee. Notepad escribe en el archivo únicamente al guardar.";
