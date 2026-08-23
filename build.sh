@@ -220,31 +220,6 @@ run_tests() {
   success "Tests finished"
 }
 
-
-# Volume name includes the marketing version so Launch Services cannot keep
-# rebinding “Always Open With” to /Volumes/Notepad/Notepad.app across releases.
-stage_dist_dmg() {
-  local app_path="$1"
-  local dmg_path="$2"
-  local version
-  version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_path/Contents/Info.plist")
-  local volname="Notepad $version"
-  local staging="/tmp/NotepadDist.$$"
-  rm -rf "$staging"
-  mkdir -p "$staging"
-  ditto "$app_path" "$staging/Notepad.app"
-  ln -s /Applications "$staging/Applications"
-  cat > "$staging/Install.txt" <<EOF
-Drag Notepad to Applications, then eject this disk.
-Do not use “Always Open With” while this window is open.
-
-메모장을 응용 프로그램으로 드래그한 뒤 이 디스크를 꺼으세요.
-이 창이 열린 채로 ‘항상 이 앱으로 열기’를 누르지 마세요.
-EOF
-  hdiutil create -volname "$volname" -srcfolder "$staging" -ov -format UDZO "$dmg_path" >/dev/null
-  rm -rf "$staging"
-}
-
 # Build Release, produce a distributable .dmg in dist/, and (if a Developer ID
 # identity + notary profile are provided via env) sign, notarize, and staple.
 do_dist() {
@@ -271,9 +246,13 @@ do_dist() {
 
   info "Creating $dmg_path"
   rm -f "$dmg_path"
-  stage_dist_dmg "$app_path" "$dmg_path"
+  local staging="/tmp/NotepadDist.$$"
+  rm -rf "$staging"; mkdir -p "$staging"
+  cp -R "$app_path" "$staging/"
+  ln -s /Applications "$staging/Applications"
+  hdiutil create -volname "Notepad" -srcfolder "$staging" -ov -format UDZO "$dmg_path" >/dev/null
+  rm -rf "$staging"
   success "Created $dmg_path"
-
 
   if [[ -n "${DEVID_APP:-}" && -n "${NOTARY_PROFILE:-}" ]]; then
     info "Submitting for notarization (profile: $NOTARY_PROFILE)..."
@@ -284,7 +263,11 @@ do_dist() {
     info "Stapling ticket to app, then rebuilding and notarizing the DMG..."
     xcrun stapler staple "$app_path"
     rm -f "$dmg_path"
-    stage_dist_dmg "$app_path" "$dmg_path"
+    rm -rf "$staging"; mkdir -p "$staging"
+    cp -R "$app_path" "$staging/"
+    ln -s /Applications "$staging/Applications"
+    hdiutil create -volname "Notepad" -srcfolder "$staging" -ov -format UDZO "$dmg_path" >/dev/null
+    rm -rf "$staging"
     xcrun notarytool submit "$dmg_path" --keychain-profile "$NOTARY_PROFILE" --wait
     xcrun stapler staple "$dmg_path"
     success "Notarized + stapled app and DMG: $dmg_path"

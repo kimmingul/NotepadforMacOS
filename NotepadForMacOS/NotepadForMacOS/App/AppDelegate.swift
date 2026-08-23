@@ -12,7 +12,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     static private(set) var launchSettled = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        LaunchServicesRegistration.registerPreferredCopy()
         DispatchQueue.main.async {
             AppDelegate.launchSettled = true
         }
