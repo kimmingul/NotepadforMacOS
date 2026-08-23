@@ -36,6 +36,8 @@
 			<array>
 				<string>public.plain-text</string>
 				<string>public.utf8-plain-text</string>
+				<string>public.text</string>
+				<string>public.source-code</string>
 				<string>public.log</string>
 			</array>
 			<key>CFBundleTypeExtensions</key>

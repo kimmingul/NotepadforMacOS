@@ -13,9 +13,9 @@ Built natively with Swift + SwiftUI for **Apple Silicon**.
 | | |
 |--|--|
 | **Mac App Store** | [Notepad Classic](https://apps.apple.com/app/notepad-classic/id6782928983) (free) |
-| **Direct download** | [v1.2.6 DMG](https://github.com/kimmingul/NotepadforMacOS/releases/tag/v1.2.6) (Developer ID · notarized) |
+| **Direct download** | [v1.2.5 DMG](https://github.com/kimmingul/NotepadforMacOS/releases/tag/v1.2.5) (Developer ID · notarized) |
 | **Website** | [GitHub Pages](https://kimmingul.github.io/NotepadforMacOS/) |
-| **Release notes** | [v1.2.6](docs/releases/RELEASE_NOTES_v1.2.6.md) · [v1.2.2](docs/releases/RELEASE_NOTES_v1.2.2.md) · [v1.2.1](docs/releases/RELEASE_NOTES_v1.2.1.md) · [v1.2](docs/releases/RELEASE_NOTES_v1.2.md) · [v1.1](docs/releases/RELEASE_NOTES_v1.1.md) |
+| **Release notes** | [v1.2.5](docs/releases/RELEASE_NOTES_v1.2.5.md) · [v1.2.2](docs/releases/RELEASE_NOTES_v1.2.2.md) · [v1.2.1](docs/releases/RELEASE_NOTES_v1.2.1.md) · [v1.2](docs/releases/RELEASE_NOTES_v1.2.md) · [v1.1](docs/releases/RELEASE_NOTES_v1.1.md) |
 
 
 **Developer:** Min-Gul Kim, MD, PhD (Jeonbuk National University Medical School)

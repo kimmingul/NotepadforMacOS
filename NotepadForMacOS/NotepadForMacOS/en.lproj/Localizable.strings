@@ -163,9 +163,6 @@
 "whatsNew.1_2_4.defaultApp" = "The installed app now carries its own notarization ticket for document launches.";
 "whatsNew.1_2_5.install" = "Install by dragging to Applications, then eject the disk image.";
 "whatsNew.1_2_5.openWith" = "Always Open With now binds to the Applications copy, not the DMG.";
-"whatsNew.1_2_6.types" = "No longer claims every text file on the Mac as a document type.";
-"whatsNew.1_2_6.defaults" = "If Open With is stuck on a blocked copy, reset the default app after install.";
-
 
 
 
