@@ -171,3 +171,4 @@
 "whatsNew.1_2_3.relaunch" = "Eine Sprachänderung startet Notepad neu.";
 "whatsNew.1_2_4.gatekeeper" = "Das Öffnen einer Datei im Finder löst keinen Gatekeeper-Prüfdialog mehr aus.";
 "whatsNew.1_2_4.readonly" = "Beim Öffnen wird ein Dokument nur gelesen. Geschrieben wird nur beim Speichern.";
+"save.reauthorize.message" = "Bestätigen Sie diesen Ort einmal, damit Notepad in diese Datei speichern kann. Späteres Speichern erfolgt direkt.";

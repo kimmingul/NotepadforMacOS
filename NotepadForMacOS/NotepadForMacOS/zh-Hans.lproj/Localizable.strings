@@ -171,3 +171,4 @@
 "whatsNew.1_2_3.relaunch" = "更改语言会重新启动 Notepad。";
 "whatsNew.1_2_4.gatekeeper" = "修复了从 Finder 打开文件时出现 Gatekeeper 检查对话框的问题。";
 "whatsNew.1_2_4.readonly" = "打开文档时只读取。只有在保存时才会写入文件。";
+"save.reauthorize.message" = "请确认一次位置，以便 Notepad 保存到此文件。以后保存将直接写入。";

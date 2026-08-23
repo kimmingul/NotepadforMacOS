@@ -171,3 +171,4 @@
 "whatsNew.1_2_3.relaunch" = "Zmiana języka uruchamia Notepad ponownie.";
 "whatsNew.1_2_4.gatekeeper" = "Otwieranie pliku z Findera nie wyświetla już okna sprawdzania Gatekeeper.";
 "whatsNew.1_2_4.readonly" = "Otwarcie dokumentu tylko go czyta. Notepad zapisuje do pliku wyłącznie przy zapisywaniu.";
+"save.reauthorize.message" = "Potwierdź tę lokalizację raz, aby Notepad mógł zapisywać w tym pliku. Kolejne zapisy będą natychmiastowe.";

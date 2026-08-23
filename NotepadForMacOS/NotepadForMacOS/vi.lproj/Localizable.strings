@@ -171,3 +171,4 @@
 "whatsNew.1_2_3.relaunch" = "Đổi ngôn ngữ sẽ khởi động lại Notepad.";
 "whatsNew.1_2_4.gatekeeper" = "Mở tệp từ Finder không còn hiện hộp thoại kiểm tra Gatekeeper.";
 "whatsNew.1_2_4.readonly" = "Mở tài liệu chỉ đọc. Notepad chỉ ghi vào tệp khi bạn lưu.";
+"save.reauthorize.message" = "Xác nhận vị trí này một lần để Notepad có thể lưu vào tệp này. Các lần lưu sau sẽ diễn ra ngay.";

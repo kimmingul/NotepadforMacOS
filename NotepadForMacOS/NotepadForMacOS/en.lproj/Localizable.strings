@@ -191,3 +191,4 @@
 "settings.language.relaunch.later" = "Later";
 "whatsNew.1_2_4.gatekeeper" = "Opening a file from Finder no longer triggers a Gatekeeper check dialog.";
 "whatsNew.1_2_4.readonly" = "Opening a document only reads it. Notepad writes to your file only when you save.";
+"save.reauthorize.message" = "Confirm this location once so Notepad can save to this file. Later saves go straight to disk.";

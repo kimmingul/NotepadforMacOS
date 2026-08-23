@@ -171,3 +171,4 @@
 "whatsNew.1_2_3.relaunch" = "Taal wijzigen herstart Notepad.";
 "whatsNew.1_2_4.gatekeeper" = "Een bestand openen vanuit de Finder toont niet meer het Gatekeeper-controlevenster.";
 "whatsNew.1_2_4.readonly" = "Een document openen leest het alleen. Notepad schrijft alleen naar je bestand bij opslaan.";
+"save.reauthorize.message" = "Bevestig deze locatie één keer zodat Notepad in dit bestand kan opslaan. Daarna wordt direct opgeslagen.";
