@@ -171,3 +171,4 @@
 "whatsNew.1_2_3.relaunch" = "Changer de langue relance Notepad.";
 "whatsNew.1_2_4.gatekeeper" = "L’ouverture d’un fichier depuis le Finder ne déclenche plus la boîte de dialogue Gatekeeper.";
 "whatsNew.1_2_4.readonly" = "Ouvrir un document se contente de le lire. Notepad n’écrit dans le fichier qu’à l’enregistrement.";
+"save.reauthorize.message" = "Confirmez cet emplacement une fois pour que Notepad puisse enregistrer dans ce fichier. Les enregistrements suivants seront directs.";

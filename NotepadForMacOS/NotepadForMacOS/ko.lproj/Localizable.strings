@@ -191,3 +191,4 @@
 "settings.language.relaunch.later" = "나중에";
 "whatsNew.1_2_4.gatekeeper" = "Finder에서 파일을 열 때 Gatekeeper 검사 대화상자가 뜨던 문제를 수정했습니다.";
 "whatsNew.1_2_4.readonly" = "문서를 열 때는 읽기만 합니다. 파일에 쓰는 건 저장할 때뿐입니다.";
+"save.reauthorize.message" = "이 파일에 저장할 수 있도록 위치를 한 번만 확인해 주세요. 다음 저장부터는 바로 저장됩니다.";

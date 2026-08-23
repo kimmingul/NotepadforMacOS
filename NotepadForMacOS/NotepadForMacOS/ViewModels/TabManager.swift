@@ -293,22 +293,37 @@ final class TabManager: ObservableObject {
         // - 읽기 전용 북마크만 있으면(문서를 열었고 아직 한 번도 저장하지 않은 상태) 이번 실행에
         //   남아 있는 권한으로 직접 시도한다. 재실행 이후라면 권한이 없어 실패하고,
         //   .notAuthorized로 호출 측이 재승인 패널을 띄운다.
+        var writeError: Error?
+        func write(to target: URL) -> Bool {
+            do {
+                try data.write(to: target, options: .atomic)
+                return true
+            } catch {
+                writeError = error
+                return false
+            }
+        }
+
         var wrote = false
         if isNewTarget || doc.securityScopedBookmark == nil {
-            wrote = ((try? data.write(to: destination, options: .atomic)) != nil)
+            wrote = write(to: destination)
         } else if doc.bookmarkAllowsWriting {
             SecurityScopedFile.access(
                 destination,
                 bookmark: doc.securityScopedBookmark,
                 readOnly: false
             ) { resolved in
-                wrote = ((try? data.write(to: resolved, options: .atomic)) != nil)
+                wrote = write(to: resolved)
             }
         } else {
-            wrote = ((try? data.write(to: destination, options: .atomic)) != nil)
+            wrote = write(to: destination)
         }
         guard wrote else {
-            return doc.bookmarkAllowsWriting ? .writeFailed : .notAuthorized
+            // 실패 원인을 북마크 종류로 추측하면 디스크가 꽉 찬 경우까지 "재승인 필요"로
+            // 오판해 엉뚱한 저장 패널을 띄운다. 실제 상황을 보고 판정한다.
+            return TabManager.isPermissionFailure(writeError, destination: destination)
+                ? .notAuthorized
+                : .writeFailed
         }
 
         tabs[index].fileURL = destination
@@ -325,6 +340,41 @@ final class TabManager: ObservableObject {
         }
         persistSession()
         return .saved
+    }
+
+    /// 저장 실패가 권한 문제인지(재승인하면 해결됨), 진짜 디스크 오류인지 구분한다.
+    /// 전자는 저장 패널로 한 번 승인받으면 되고, 후자는 사용자에게 알려야 한다.
+    ///
+    /// 오류 코드만으로는 부족하다. 샌드박스 거부는 여러 코드로 흩어져 나오고, 원자적 쓰기는
+    /// 같은 디렉터리에 임시 파일을 만들다 실패하기도 한다. 그래서 대상에 대한 쓰기 권한을
+    /// `access(2)`로 직접 확인한다. `access(2)`는 파일을 열지 않으므로 격리 속성을 유발하지 않는다.
+    private static func isPermissionFailure(_ error: Error?, destination: URL) -> Bool {
+        if let error = error as NSError?, matchesPermissionCode(error) {
+            return true
+        }
+
+        let fileManager = FileManager.default
+        if fileManager.fileExists(atPath: destination.path) {
+            return !fileManager.isWritableFile(atPath: destination.path)
+        }
+        // 새로 만드는 파일은 담길 디렉터리에 쓸 수 있는지가 기준이다.
+        return !fileManager.isWritableFile(atPath: destination.deletingLastPathComponent().path)
+    }
+
+    private static func matchesPermissionCode(_ error: NSError) -> Bool {
+        if error.domain == NSCocoaErrorDomain,
+           error.code == NSFileWriteNoPermissionError || error.code == NSFileWriteVolumeReadOnlyError {
+            return true
+        }
+        if error.domain == NSPOSIXErrorDomain,
+           error.code == Int(EACCES) || error.code == Int(EPERM) || error.code == Int(EROFS) {
+            return true
+        }
+        // Foundation은 원인을 NSUnderlyingError로 감싸 올려보내는 경우가 많다.
+        if let underlying = error.userInfo[NSUnderlyingErrorKey] as? NSError {
+            return matchesPermissionCode(underlying)
+        }
+        return false
     }
 
     // MARK: - Encoding features (요청 핵심 기능)

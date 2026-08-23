@@ -171,3 +171,4 @@
 "whatsNew.1_2_3.relaunch" = "Cambiando lingua Notepad si riavvia.";
 "whatsNew.1_2_4.gatekeeper" = "Aprire un file dal Finder non mostra più la finestra di verifica di Gatekeeper.";
 "whatsNew.1_2_4.readonly" = "Aprire un documento lo legge soltanto. Notepad scrive sul file solo al salvataggio.";
+"save.reauthorize.message" = "Conferma questa posizione una volta per consentire a Notepad di salvare in questo file. I salvataggi successivi saranno diretti.";

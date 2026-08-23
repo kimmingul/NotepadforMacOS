@@ -48,8 +48,10 @@ enum NotepadDocumentActions {
         switch outcome {
         case .saved:
             return true
-        case .noTarget, .notAuthorized:
+        case .noTarget:
             return saveAsTab(id, in: tabManager)
+        case .notAuthorized:
+            return saveAsTab(id, in: tabManager, reauthorizing: true)
         case .encodingFailed, .writeFailed:
             if let document = tabManager.document(with: id) {
                 showSaveFailedAlert(for: document)
@@ -64,18 +66,25 @@ enum NotepadDocumentActions {
         return saveAsTab(id, in: tabManager)
     }
 
+    /// - Parameter reauthorizing: 이 문서에 쓸 권한이 없어서(읽기 전용 북마크만 보유) 사용자
+    ///   승인을 받으려고 띄우는 경우. 사용자에게는 "저장을 눌렀는데 왜 위치를 묻지?"로 보이므로
+    ///   이유를 패널에 표시한다. 일반 Save As에는 표시하지 않는다.
     @discardableResult
-    static func saveAsTab(_ id: UUID, in tabManager: TabManager) -> Bool {
+    static func saveAsTab(_ id: UUID, in tabManager: TabManager, reauthorizing: Bool = false) -> Bool {
         guard let document = tabManager.document(with: id) else { return false }
 
         let panel = NSSavePanel()
         panel.canCreateDirectories = true
         panel.allowedContentTypes = [.plainText]
         panel.nameFieldStringValue = document.displayTitle
-        // 이미 경로가 있는 문서(쓰기 권한 재승인)는 원래 위치와 이름을 기본값으로 보여준다.
+        // 이미 경로가 있는 문서는 원래 위치와 이름을 기본값으로 보여준다.
         if let existing = document.fileURL {
             panel.directoryURL = existing.deletingLastPathComponent()
             panel.nameFieldStringValue = existing.lastPathComponent
+        }
+        if reauthorizing {
+            panel.message = String(localized: "save.reauthorize.message")
+            panel.prompt = String(localized: "Save")
         }
 
         let encodingPicker = NSPopUpButton(frame: .zero, pullsDown: false)

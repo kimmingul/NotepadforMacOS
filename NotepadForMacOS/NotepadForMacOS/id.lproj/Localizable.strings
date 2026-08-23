@@ -171,3 +171,4 @@
 "whatsNew.1_2_3.relaunch" = "Mengganti bahasa menjalankan ulang Notepad.";
 "whatsNew.1_2_4.gatekeeper" = "Membuka berkas dari Finder tidak lagi memunculkan dialog pemeriksaan Gatekeeper.";
 "whatsNew.1_2_4.readonly" = "Membuka dokumen hanya membacanya. Notepad menulis ke berkas hanya saat Anda menyimpan.";
+"save.reauthorize.message" = "Konfirmasi lokasi ini sekali agar Notepad dapat menyimpan ke berkas ini. Penyimpanan berikutnya langsung tersimpan.";

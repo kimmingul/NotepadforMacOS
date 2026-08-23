@@ -95,6 +95,37 @@ final class DocumentQuarantineTests: XCTestCase {
         XCTAssertTrue(tab.bookmarkAllowsWriting, "저장 성공 후에는 쓰기 가능 북마크로 승급되어야 한다")
     }
 
+    /// 쓸 수 없는 위치로 저장하면 `.notAuthorized`가 나와야 한다.
+    /// (호출 측이 이 값을 보고 재승인 저장 패널을 띄운다.)
+    func testSaveToUnwritableLocationReportsNotAuthorized() throws {
+        let manager = TabManager(sessionID: UUID())
+        manager.newTab(content: "권한 없는 위치\n")
+        let id = try XCTUnwrap(manager.selectedTabID)
+
+        // 시스템 볼륨 루트는 샌드박스와 SIP 양쪽에서 막혀 있다.
+        let blocked = URL(fileURLWithPath: "/qtn-not-writable-\(UUID().uuidString).txt")
+        XCTAssertEqual(manager.saveTab(id, to: blocked), .notAuthorized)
+
+        let tab = try XCTUnwrap(manager.document(with: id))
+        XCTAssertNil(tab.fileURL, "실패한 저장이 탭의 경로를 바꾸면 안 된다")
+        XCTAssertTrue(tab.isDirty, "실패한 저장은 dirty 상태를 유지해야 한다")
+    }
+
+    /// 대상 인코딩으로 표현할 수 없는 문자는 권한 문제와 구분되어야 한다.
+    /// (이쪽은 패널이 아니라 경고를 띄워야 한다.)
+    func testUnrepresentableCharactersReportEncodingFailure() throws {
+        let url = try makeTempFile("원본\n")
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+
+        let manager = TabManager(sessionID: UUID())
+        XCTAssertTrue(manager.openFile(url: url))
+        let id = try XCTUnwrap(manager.selectedTabID)
+
+        manager.updateContent(for: id, newContent: "이모지 😀 는 EUC-KR로 표현할 수 없다\n")
+        XCTAssertEqual(manager.saveTab(id, encoding: .eucKR), .encodingFailed)
+        XCTAssertEqual(try String(contentsOf: url, encoding: .utf8), "원본\n", "실패한 저장이 파일을 건드리면 안 된다")
+    }
+
     /// 세션 복원은 북마크의 쓰기 권한 여부를 그대로 유지해야 한다.
     /// (읽기 전용이 쓰기 가능으로 넓어지면 복원 읽기에서 다시 격리가 전파된다.)
     func testSessionRoundtripPreservesReadOnlyBookmarkFlag() throws {
