@@ -169,3 +169,5 @@
 "whatsNew.1_2_3.picker" = "設定 → 言語。一覧は各言語の表記のままなので見つけやすいです。";
 "whatsNew.1_2_3.system" = "デフォルトはこの Mac の言語です。";
 "whatsNew.1_2_3.relaunch" = "言語を変えると Notepad が再起動します。";
+"whatsNew.1_2_4.gatekeeper" = "Finder からファイルを開くと Gatekeeper の確認ダイアログが出る問題を修正しました。";
+"whatsNew.1_2_4.readonly" = "文書を開くときは読み取りのみです。ファイルへの書き込みは保存時だけです。";

@@ -169,3 +169,5 @@
 "whatsNew.1_2_3.picker" = "设置 → 语言。列表使用各语言自己的写法，方便查找。";
 "whatsNew.1_2_3.system" = "默认跟随这台 Mac 的语言。";
 "whatsNew.1_2_3.relaunch" = "更改语言会重新启动 Notepad。";
+"whatsNew.1_2_4.gatekeeper" = "修复了从 Finder 打开文件时出现 Gatekeeper 检查对话框的问题。";
+"whatsNew.1_2_4.readonly" = "打开文档时只读取。只有在保存时才会写入文件。";

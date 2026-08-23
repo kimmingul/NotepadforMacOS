@@ -189,4 +189,5 @@
 "settings.language.relaunch.message" = "The new language applies after Notepad restarts.";
 "settings.language.relaunch.now" = "Relaunch";
 "settings.language.relaunch.later" = "Later";
-
+"whatsNew.1_2_4.gatekeeper" = "Opening a file from Finder no longer triggers a Gatekeeper check dialog.";
+"whatsNew.1_2_4.readonly" = "Opening a document only reads it. Notepad writes to your file only when you save.";

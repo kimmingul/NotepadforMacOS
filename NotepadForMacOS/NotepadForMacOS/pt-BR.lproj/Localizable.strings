@@ -169,3 +169,5 @@
 "whatsNew.1_2_3.picker" = "Ajustes → Idioma. Os nomes ficam na escrita original para você achar o seu.";
 "whatsNew.1_2_3.system" = "O padrão segue o idioma deste Mac.";
 "whatsNew.1_2_3.relaunch" = "Mudar o idioma reabre o Notepad.";
+"whatsNew.1_2_4.gatekeeper" = "Abrir um arquivo no Finder não exibe mais a caixa de diálogo de verificação do Gatekeeper.";
+"whatsNew.1_2_4.readonly" = "Abrir um documento apenas o lê. O Notepad grava no arquivo somente ao salvar.";
