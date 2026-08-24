@@ -178,7 +178,12 @@ final class TabManager: ObservableObject {
         persistSession()
     }
 
-    func closeTab(_ id: UUID) {
+    /// 탭을 닫는다.
+    ///
+    /// - Parameter replacingLastTab: 마지막 탭을 닫을 때 빈 탭을 새로 만들지 여부.
+    ///   창을 닫는 흐름에서는 false를 넘겨야 한다. true로 두면 창이 닫히기 직전에 빈 탭이
+    ///   생겨 세션에 남고, 사용자가 보기에는 탭을 닫았는데 아무 일도 일어나지 않는다.
+    func closeTab(_ id: UUID, replacingLastTab: Bool = true) {
         guard let index = tabs.firstIndex(where: { $0.id == id }) else { return }
 
         let wasSelected = selectedTabID == id
@@ -186,7 +191,11 @@ final class TabManager: ObservableObject {
 
         if wasSelected {
             if tabs.isEmpty {
-                newTab() // 항상 최소 1개 탭 유지 (Notepad 스타일)
+                if replacingLastTab {
+                    newTab() // 항상 최소 1개 탭 유지 (Notepad 스타일)
+                } else {
+                    selectedTabID = nil
+                }
             } else {
                 // 인접 탭 선택 (Windows처럼)
                 let newIndex = min(index, tabs.count - 1)

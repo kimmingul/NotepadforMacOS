@@ -120,12 +120,27 @@ enum NotepadDocumentActions {
         return closeTab(id, in: tabManager)
     }
 
+    /// 탭을 닫는다. 마지막 탭이었다면 창까지 닫는다.
+    ///
+    /// Windows 11 메모장과 같은 동작이다. 마지막 탭을 닫고 빈 탭을 새로 만들면 사용자가 보기에
+    /// 아무 일도 일어나지 않는다(닫은 탭 자리에 똑같이 생긴 빈 탭이 나타난다). 창이 닫히면
+    /// 남은 창이 없을 때 AppDelegate가 앱을 종료한다.
     @discardableResult
     static func closeTab(_ id: UUID, in tabManager: TabManager) -> Bool {
         guard let document = tabManager.document(with: id) else { return false }
+        let isLastTab = tabManager.tabs.count == 1
+
+        // 닫기가 확정된 뒤에만 호출한다. 저장하지 않기로 한 내용이 세션에 남지 않도록
+        // 창을 닫기 전에 탭을 먼저 제거한다.
+        func finishClose() {
+            tabManager.closeTab(id, replacingLastTab: !isLastTab)
+            if isLastTab {
+                closeContainingWindow()
+            }
+        }
 
         guard document.isDirty else {
-            tabManager.closeTab(id)
+            finishClose()
             return true
         }
 
@@ -134,22 +149,36 @@ enum NotepadDocumentActions {
             if document.fileURL == nil {
                 let saved = saveAsTab(id, in: tabManager)
                 if saved {
-                    tabManager.closeTab(id)
+                    finishClose()
                 }
                 return saved
             }
 
             let saved = apply(tabManager.saveTab(id), for: id, in: tabManager)
             if saved {
-                tabManager.closeTab(id)
+                finishClose()
             }
             return saved
         case .discard:
-            tabManager.closeTab(id)
+            finishClose()
             return true
         case .cancel:
             return false
         }
+    }
+
+    /// 마지막 탭을 닫은 편집기 창을 닫는다.
+    ///
+    /// 설정 창이나 시트가 앞에 있을 수 있으므로 key window를 그대로 쓰지 않고, 편집기 창
+    /// (탭 UI를 담은 창)을 찾는다. 시트가 떠 있으면 그 시트를 소유한 창을 대상으로 한다.
+    private static func closeContainingWindow() {
+        let candidates = NSApp.windows.filter { window in
+            window.isVisible && window.contentViewController != nil && !window.isSheet
+        }
+        let target = (NSApp.keyWindow?.sheetParent ?? NSApp.keyWindow)
+            ?? NSApp.mainWindow
+            ?? candidates.first
+        target?.performClose(nil)
     }
 
     private static func promptForUnsavedChanges(_ document: Document) -> UnsavedCloseChoice {
