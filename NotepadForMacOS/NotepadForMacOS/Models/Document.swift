@@ -60,6 +60,15 @@ struct Document: Identifiable, Equatable, Sendable {
         lineEnding.rawValue
     }
 
+    /// 실행 시 자동으로 만들어지는 빈 '제목 없음' 탭인지.
+    ///
+    /// 세션이 비어 있으면 창은 항상 이 자리표시자 탭 하나로 시작한다. 그 상태에서 Finder가
+    /// 문서를 넘기면 자리표시자를 그대로 두고 탭을 하나 더 만들어, 빈 탭과 파일 탭이 나란히
+    /// 남았다. 사용자가 입력한 내용이 있으면(내용이 있거나 dirty) 자리표시자가 아니다.
+    var isPlaceholder: Bool {
+        fileURL == nil && content.isEmpty && !isDirty
+    }
+
     // MARK: - Init
 
     init(fileURL: URL? = nil,

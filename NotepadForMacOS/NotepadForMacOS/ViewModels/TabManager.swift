@@ -288,7 +288,15 @@ final class TabManager: ObservableObject {
             lineEnding: le,
             isDirty: false
         )
-        // 깨진 탭이 있던 자리를 유지해 탭 순서가 튀지 않게 한다.
+        // 자리 결정:
+        //  - 복원 실패로 비운 탭이 있으면 그 자리를 유지해 탭 순서가 튀지 않게 한다.
+        //  - 그렇지 않고 창이 빈 '제목 없음' 자리표시자 하나뿐이면 그 자리를 대체한다.
+        //    (세션이 비었을 때 항상 만들어지는 탭이라, 그대로 두면 Finder에서 파일을 열 때
+        //     빈 탭과 파일 탭이 함께 남는다.)
+        if replacementIndex == nil, tabs.count == 1, tabs[0].isPlaceholder {
+            tabs.removeAll()
+            replacementIndex = 0
+        }
         if let replacementIndex, replacementIndex <= tabs.count {
             tabs.insert(doc, at: replacementIndex)
         } else {
