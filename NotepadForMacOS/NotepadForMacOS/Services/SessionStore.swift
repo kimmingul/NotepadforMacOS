@@ -349,7 +349,10 @@ private struct TabSnapshot: Sendable {
         createdAt = doc.createdAt
         content = doc.content
         // 미저장 내용이 있는 경우(dirty 또는 untitled)에만 스크래치 파일 작성.
-        // 단, 복원 실패(loadError) 탭은 빈 내용을 덮어쓰지 않도록 작성하지 않음.
-        writeContent = (doc.isDirty || doc.fileURL == nil) && !doc.loadError
+        //
+        // loadError는 여기서 보지 않는다. 원본을 읽지 못한 탭이라도 사용자가 입력한 내용은
+        // 보존해야 하고(isDirty가 그 신호다), 손대지 않은 탭은 isDirty가 false라 어차피
+        // 빈 내용이 기록되지 않는다. loadError는 저장 시 덮어쓰기 확인 용도로만 남긴다.
+        writeContent = doc.isDirty || doc.fileURL == nil
     }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// 앱 샌드박스에서 사용자가 선택한 파일에 지속적으로 접근하기 위한 보안 스코프 북마크 도우미.
 ///
@@ -67,10 +68,32 @@ nonisolated enum SecurityScopedFile {
         if readOnly {
             options.insert(.securityScopeAllowOnlyReadAccess)
         }
-        return try? url.bookmarkData(
-            options: options,
-            includingResourceValuesForKeys: nil,
-            relativeTo: nil
-        )
+        do {
+            return try url.bookmarkData(
+                options: options,
+                includingResourceValuesForKeys: nil,
+                relativeTo: nil
+            )
+        } catch {
+            let nsError = error as NSError
+            Logger.security.error(
+                """
+                bookmarkData failed: domain=\(nsError.domain, privacy: .public) \
+                code=\(nsError.code, privacy: .public) readOnly=\(readOnly, privacy: .public) \
+                underlying=\(String(describing: nsError.userInfo[NSUnderlyingErrorKey]), privacy: .public) \
+                desc=\(nsError.localizedDescription, privacy: .public)
+                """
+            )
+            return nil
+        }
     }
+}
+
+extension Logger {
+    /// 샌드박스 권한·북마크 문제 진단용. Console.app 또는
+    /// `log show --predicate 'subsystem == "com.nanumspace.mgkim.NotepadForMacOS"'`로 볼 수 있다.
+    static let security = Logger(
+        subsystem: "com.nanumspace.mgkim.NotepadForMacOS",
+        category: "security-scope"
+    )
 }

@@ -204,9 +204,9 @@ final class TabManager: ObservableObject {
         if tabs[index].content != newContent {
             tabs[index].content = newContent
             tabs[index].isDirty = true
-            // 사용자가 직접 내용을 입력했으므로 더 이상 '원본 읽기 실패' 상태가 아니다.
-            // (이 플래그를 비워야 편집 내용이 세션 스크래치로 저장된다.)
-            tabs[index].loadError = false
+            // loadError는 "원본을 한 번도 읽지 못했다"는 사실이므로 입력으로 지우지 않는다.
+            // 지우면 저장 시 덮어쓰기 확인이 건너뛰어지고, 읽지 못한 원본이 거의 빈 내용으로
+            // 조용히 덮어써진다. 편집 내용의 세션 보존은 isDirty가 결정한다.
         }
     }
 
@@ -233,6 +233,19 @@ final class TabManager: ObservableObject {
         var replacementIndex: Int?
         if let existing = tabs.firstIndex(where: { $0.fileURL.map(Self.identity) == target }) {
             guard tabs[existing].loadError else {
+                // 정상적으로 열려 있는 탭이면 그 탭으로만 전환한다(미저장 편집 보호).
+                //
+                // 다만 북마크가 없는 탭은 여기서 발급해 둔다. 세션에 경로만 있고 북마크가 없는
+                // 탭도 `com.apple.macl`이 남아 있는 동안은 복원 읽기가 성공하기 때문에
+                // loadError가 아니고, 그러면 아무도 북마크를 만들지 않는다. 그 상태로 macl
+                // 접근이 끊기면(다른 앱이 파일을 새로 쓰는 등) 그 탭은 조용히 빈 탭이 된다.
+                // 지금은 Launch Services가 이 URL에 접근 권한을 준 시점이라 발급할 수 있다.
+                if tabs[existing].securityScopedBookmark == nil,
+                   let fresh = SecurityScopedFile.makeBookmark(for: url, readOnly: true) {
+                    tabs[existing].securityScopedBookmark = fresh
+                    tabs[existing].bookmarkAllowsWriting = false
+                    persistSession()
+                }
                 selectedTabID = tabs[existing].id
                 return true
             }
@@ -277,16 +290,25 @@ final class TabManager: ObservableObject {
         return true
     }
 
-    /// 같은 파일인지 비교하기 위한 경로 신원.
+    /// 같은 파일인지 비교하기 위한 신원.
     ///
-    /// 문자열 비교만 하면 한글 파일명에서 어긋난다. 파일 시스템은 이름을 분해형(NFD)으로
-    /// 넘겨주는 경우가 있고 세션에 저장된 경로는 조합형(NFC)일 수 있어서, 같은 파일인데
-    /// 다른 파일로 보이고 탭이 중복 생성된다. 심볼릭 링크도 함께 해소한다.
+    /// 파일이 존재하면 파일 시스템이 주는 식별자(inode + device)를 쓴다. 경로 문자열 비교는
+    /// 세 가지 경우에 같은 파일을 다른 파일로 오판하고, 그러면 한 파일에 두 탭이 열려 서로의
+    /// 편집을 덮어쓴다.
+    ///   - 한글 등 비ASCII 이름: 파일 시스템은 분해형(NFD), 세션 저장 경로는 조합형(NFC)
+    ///   - macOS 기본 APFS는 대소문자를 구분하지 않는다: `Report.txt`와 `report.txt`가 같은 파일
+    ///   - 하드링크나 심볼릭 링크로 같은 파일에 이르는 서로 다른 경로
+    ///
+    /// 파일이 없으면(삭제됨, 아직 저장 안 됨) 식별자를 얻을 수 없으므로 정규화한 경로로 비교한다.
     private static func identity(of url: URL) -> String {
-        url.standardizedFileURL
-            .resolvingSymlinksInPath()
-            .path
-            .precomposedStringWithCanonicalMapping
+        // 리소스 값 조회는 심볼릭 링크를 따라가지 않는다. 링크와 대상이 서로 다른 식별자로
+        // 보이면 같은 파일에 탭이 두 개 열리므로, 먼저 링크를 해소한다.
+        let resolved = url.standardizedFileURL.resolvingSymlinksInPath()
+        if let identifier = try? resolved.resourceValues(forKeys: [.fileResourceIdentifierKey])
+            .fileResourceIdentifier {
+            return "file:\(identifier)"
+        }
+        return "path:" + resolved.path.precomposedStringWithCanonicalMapping
     }
 
     /// 현재 선택 탭 저장
