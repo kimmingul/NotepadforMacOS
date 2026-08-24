@@ -51,6 +51,10 @@ Commands:
   test      Run the unit test suite
   dist      Developer ID DMG for direct distribution: build Release + dist/Notepad.dmg
             (signs + notarizes if DEVID_APP/NOTARY_PROFILE set). NOT for the App Store.
+  distpkg   Developer ID installer package: build Release + dist/Notepad-v<version>.pkg
+            (signs + notarizes + staples). Preferred over `dist` for direct distribution:
+            installd writes the payload without a quarantine record, so the installed app
+            never trips Gatekeeper's quarantine resolver and is never App-Translocated.
   appstore  Mac App Store: archive Release, export dist/appstore/Notepad.pkg, and
             (if upload creds are set) upload to App Store Connect. Requires APPSTORE_TEAM_ID.
   upload    Upload an already-built .pkg to App Store Connect without rebuilding
@@ -61,8 +65,9 @@ Commands:
   help      Show this help message
 
 Environment variables:
-  Developer ID (dist):
+  Developer ID (dist / distpkg):
     DEVID_APP        "Developer ID Application: Your Name (TEAMID)"
+    DEVID_INSTALLER  "Developer ID Installer: Your Name (TEAMID)"      [distpkg only]
     NOTARY_PROFILE   keychain profile name from `xcrun notarytool store-credentials`
   App Store (appstore):
     APPSTORE_TEAM_ID 10-char Team ID (developer.apple.com -> Membership)         [required]
@@ -77,6 +82,7 @@ Examples:
   ./build.sh release
   ./build.sh test
   ./build.sh dist
+  ./build.sh distpkg
   ./build.sh appstore
   ./build.sh clean
 EOF
@@ -437,6 +443,94 @@ EOF
   upload_pkg "$pkg" || true
 }
 
+# Build Release and produce a signed, notarized, stapled installer package for
+# distribution OUTSIDE the App Store.
+#
+# Why a .pkg in addition to the .dmg: a browser marks whatever it downloads with
+# com.apple.quarantine. With a drag-install DMG that record travels onto the copy the
+# user drops into /Applications, so the app bundle itself stays quarantined — Gatekeeper
+# runs its quarantine resolver on launch, and a copy left inside the DMG or in Downloads
+# can be App-Translocated to a fresh random path, which keeps the user's approval from
+# ever sticking. Only the .pkg file receives the download quarantine; the payload that
+# installd writes to /Applications does not, and it always lands at one stable path.
+#
+# Requires: DEVID_INSTALLER ("Developer ID Installer: Name (TEAMID)") for the package
+# signature, DEVID_APP for the app signature, and NOTARY_PROFILE to notarize.
+do_distpkg() {
+  build_target "Release" "platform=macOS,arch=arm64"
+
+  local app_path="$BUILD_DIR/DerivedData/Build/Products/Release/Notepad.app"
+  if [[ ! -d "$app_path" ]]; then
+    error "Release app not found at $app_path"; exit 1
+  fi
+
+  if [[ -z "${DEVID_APP:-}" || -z "${DEVID_INSTALLER:-}" ]]; then
+    error "distpkg needs both signing identities:"
+    echo "  export DEVID_APP=\"Developer ID Application: Your Name (TEAMID)\""
+    echo "  export DEVID_INSTALLER=\"Developer ID Installer: Your Name (TEAMID)\""
+    echo "  export NOTARY_PROFILE=\"notary-profile\""
+    exit 1
+  fi
+
+  info "Signing app with Developer ID + Hardened Runtime: $DEVID_APP"
+  codesign --force --options runtime --timestamp \
+    --entitlements "NotepadForMacOS/Notepad.entitlements" \
+    --sign "$DEVID_APP" "$app_path"
+
+  # Staple the app before packaging so its first launch works offline.
+  if [[ -n "${NOTARY_PROFILE:-}" ]]; then
+    local app_zip="$BUILD_DIR/Notepad-app-notarize.zip"
+    info "Submitting the app for notarization (profile: $NOTARY_PROFILE)..."
+    rm -f "$app_zip"
+    /usr/bin/ditto -c -k --keepParent "$app_path" "$app_zip"
+    xcrun notarytool submit "$app_zip" --keychain-profile "$NOTARY_PROFILE" --wait
+    rm -f "$app_zip"
+    info "Stapling ticket to the app..."
+    xcrun stapler staple "$app_path"
+    xcrun stapler validate "$app_path"
+  fi
+
+  local version
+  version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' \
+              "$app_path/Contents/Info.plist")
+  local dist_dir="$SCRIPT_DIR/dist"
+  mkdir -p "$dist_dir"
+  local component="$BUILD_DIR/Notepad-component.pkg"
+  local pkg_path="$dist_dir/Notepad-v${version}.pkg"
+
+  info "Building component package"
+  rm -f "$component" "$pkg_path"
+  /usr/bin/pkgbuild \
+    --component "$app_path" \
+    --install-location /Applications \
+    --identifier "com.nanumspace.mgkim.NotepadForMacOS.pkg" \
+    --version "$version" \
+    "$component"
+
+  info "Signing installer with $DEVID_INSTALLER"
+  /usr/bin/productbuild \
+    --package "$component" \
+    --sign "$DEVID_INSTALLER" \
+    "$pkg_path"
+  rm -f "$component"
+  success "Created $pkg_path"
+
+  if [[ -n "${NOTARY_PROFILE:-}" ]]; then
+    info "Submitting the installer for notarization..."
+    xcrun notarytool submit "$pkg_path" --keychain-profile "$NOTARY_PROFILE" --wait
+    info "Stapling ticket to the installer..."
+    xcrun stapler staple "$pkg_path"
+    success "Notarized + stapled (app and installer): $pkg_path"
+  else
+    warn "NOTARY_PROFILE not set — package is signed but NOT notarized."
+  fi
+
+  echo ""
+  echo "Verify after installing:"
+  echo "  xattr -p com.apple.quarantine /Applications/Notepad.app   # expect: no such xattr"
+  echo "  spctl -a -t exec -vv /Applications/Notepad.app"
+}
+
 # Upload an already-built .pkg to App Store Connect WITHOUT rebuilding.
 #   ./build.sh upload [path-to.pkg]   (defaults to dist/appstore/Notepad.pkg)
 do_upload() {
@@ -481,6 +575,9 @@ case "$command" in
     ;;
   dist)
     do_dist
+    ;;
+  distpkg)
+    do_distpkg
     ;;
   appstore)
     do_appstore
