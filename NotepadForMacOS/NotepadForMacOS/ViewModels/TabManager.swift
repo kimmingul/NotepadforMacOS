@@ -220,11 +220,24 @@ final class TabManager: ObservableObject {
 
     @discardableResult
     func openFile(url: URL, preferredEncoding: TextEncoding? = nil) -> Bool {
-        // 이미 같은 파일이 열려 있으면 해당 탭으로 이동 (경로 표준화로 심볼릭/북마크 차이 흡수)
-        let target = url.standardizedFileURL
-        if let existing = tabs.firstIndex(where: { $0.fileURL?.standardizedFileURL == target }) {
-            selectedTabID = tabs[existing].id
-            return true
+        // 이미 같은 파일이 열려 있으면 그 탭으로 이동한다.
+        //
+        // 단, 그 탭이 복원 때 원본을 읽지 못한 상태(loadError)면 그냥 전환하면 안 된다.
+        // 복원 시점에는 유효한 북마크가 없으면 샌드박스가 읽기를 거부하는데, 지금은 Launch
+        // Services가 이 URL에 접근 권한을 부여한 상태다. 그대로 전환만 하면 그 탭은 영구히 빈
+        // 화면으로 남아, Finder에서 몇 번을 열어도 내용이 나오지 않는다.
+        //
+        // 이 경우 깨진 탭을 자리에서 빼고 아래의 정상 열기 경로로 새로 읽는다. 별도 재읽기
+        // 경로를 두면 읽기 전용 북마크 생성이 실패해(측정 확인) 다음 실행에서 또 빈 탭이 된다.
+        let target = Self.identity(of: url)
+        var replacementIndex: Int?
+        if let existing = tabs.firstIndex(where: { $0.fileURL.map(Self.identity) == target }) {
+            guard tabs[existing].loadError else {
+                selectedTabID = tabs[existing].id
+                return true
+            }
+            tabs.remove(at: existing)
+            replacementIndex = existing
         }
 
         // 재실행 후에도 **읽을** 수 있도록 읽기 전용 보안 스코프 북마크를 만든다.
@@ -232,8 +245,14 @@ final class TabManager: ObservableObject {
         // App Sandbox가 그 쓰기 의도 open에 com.apple.quarantine을 전파한다(내용/mtime은
         // 그대로인데 격리만 붙어 이후 Finder 열기마다 Gatekeeper 대화상자가 뜬다).
         // 쓰기 가능 북마크는 실제 저장이 성공한 뒤에만 만든다(saveTab 참고).
-        let bookmark = SecurityScopedFile.makeBookmark(for: url, readOnly: true)
+        var bookmark = SecurityScopedFile.makeBookmark(for: url, readOnly: true)
         guard let data = try? Data(contentsOf: url) else { return false }
+        if bookmark == nil {
+            // 깨진 탭을 교체하는 경로에서 첫 시도가 실패하는 경우가 관측됐다. 읽기가 성공한
+            // 지금 한 번 더 시도한다. 그래도 실패하면 이번 실행에서는 내용만 보여주고, 다음에
+            // 이 파일을 다시 열 때 북마크를 만든다(복원 시 빈 탭이 되는 것보다 낫다).
+            bookmark = SecurityScopedFile.makeBookmark(for: url, readOnly: true)
+        }
 
         let encoding = preferredEncoding ?? TextEncoding.detect(from: data)
         let content = encoding.decode(data: data) ?? String(data: data, encoding: .utf8) ?? ""
@@ -247,10 +266,27 @@ final class TabManager: ObservableObject {
             lineEnding: le,
             isDirty: false
         )
-        tabs.append(doc)
+        // 깨진 탭이 있던 자리를 유지해 탭 순서가 튀지 않게 한다.
+        if let replacementIndex, replacementIndex <= tabs.count {
+            tabs.insert(doc, at: replacementIndex)
+        } else {
+            tabs.append(doc)
+        }
         selectedTabID = doc.id
         persistSession()
         return true
+    }
+
+    /// 같은 파일인지 비교하기 위한 경로 신원.
+    ///
+    /// 문자열 비교만 하면 한글 파일명에서 어긋난다. 파일 시스템은 이름을 분해형(NFD)으로
+    /// 넘겨주는 경우가 있고 세션에 저장된 경로는 조합형(NFC)일 수 있어서, 같은 파일인데
+    /// 다른 파일로 보이고 탭이 중복 생성된다. 심볼릭 링크도 함께 해소한다.
+    private static func identity(of url: URL) -> String {
+        url.standardizedFileURL
+            .resolvingSymlinksInPath()
+            .path
+            .precomposedStringWithCanonicalMapping
     }
 
     /// 현재 선택 탭 저장

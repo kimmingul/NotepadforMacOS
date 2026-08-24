@@ -544,12 +544,12 @@
     <section class="hero">
       <div class="hero-inner">
         <div>
-          <p class="eyebrow">Private plain text · macOS · v1.2.5</p>
+          <p class="eyebrow">Private plain text · macOS · v1.2.6</p>
           <h1>No AI. No account. No cloud.</h1>
           <p class="hero-copy">A fast plain-text notepad for Mac. Multi-tab editing with session restore—including unsaved notes—local spell check, encodings done right, and source highlight for Markdown, HTML, JSON, XML, and logs. Optional preview for <code>.md</code> and <code>.html</code>. Your files stay on your Mac.</p>
           <div class="hero-actions">
             <a class="button" href="https://apps.apple.com/app/notepad-classic/id6782928983">Mac App Store</a>
-            <a class="button secondary" href="https://github.com/kimmingul/NotepadforMacOS/releases/tag/v1.2.5">Download installer</a>
+            <a class="button secondary" href="https://github.com/kimmingul/NotepadforMacOS/releases/tag/v1.2.6">Download installer</a>
           </div>
           <p class="availability">Free · Apple Silicon · Sandboxed · Network only if you allow remote preview assets · 16 languages. Also on <a href="https://github.com/kimmingul/NotepadforMacOS">GitHub</a>.</p>
         </div>
@@ -571,13 +571,13 @@
     <section id="whats-new" class="section">
       <div class="section-inner">
         <div class="whats-new">
-          <h2>What's new in v1.2.5</h2>
-          <p class="lede">Install from the signed installer package. <a href="https://github.com/kimmingul/NotepadforMacOS/releases/tag/v1.2.5">Release notes</a></p>
+          <h2>What's new in v1.2.6</h2>
+          <p class="lede">Fixes a file that would not open. <a href="https://github.com/kimmingul/NotepadforMacOS/releases/tag/v1.2.6">Release notes</a></p>
           <ul>
-            <li>New signed, notarized <code>.pkg</code> installer — the installed app carries no quarantine record, so Finder stops running a Gatekeeper check when you open documents.</li>
+            <li>A tab that could not be restored at launch no longer stays blank — opening the file now reads it instead of switching to the empty tab.</li>
+            <li>Korean and other non-ASCII filenames no longer open twice; paths are compared with canonical mapping.</li>
+            <li>Install from the signed <code>.pkg</code>: the installed app carries no quarantine record, so Finder runs no Gatekeeper check when you open documents.</li>
             <li>Opening a document only reads it. Notepad writes to your file only when you save.</li>
-            <li>Save failures now say what actually went wrong instead of always asking for a location.</li>
-            <li>Files marked before v1.2.4 keep their attribute — Notepad never changes attributes on your files.</li>
           </ul>
         </div>
       </div>
@@ -645,11 +645,11 @@
         <div class="release">
           <div>
             <h2>Get Notepad Classic</h2>
-            <p><strong>Mac App Store</strong> (recommended) or a <strong>Developer ID–signed, notarized DMG</strong> from GitHub. On another Mac, use this DMG — do not copy a Debug build. v1.2.5 adds a signed installer package; the installed app carries no quarantine record.</p>
+            <p><strong>Mac App Store</strong> (recommended) or a <strong>Developer ID–signed, notarized DMG</strong> from GitHub. On another Mac, use this DMG — do not copy a Debug build. v1.2.6 fixes a file that would not open, and installs without a quarantine record.</p>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px;align-items:stretch">
             <a class="button" href="https://apps.apple.com/app/notepad-classic/id6782928983">App Store</a>
-            <a class="button secondary" href="https://github.com/kimmingul/NotepadforMacOS/releases/tag/v1.2.5">Installer v1.2.5</a>
+            <a class="button secondary" href="https://github.com/kimmingul/NotepadforMacOS/releases/tag/v1.2.6">Installer v1.2.6</a>
           </div>
         </div>
       </div>
