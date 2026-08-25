@@ -334,19 +334,33 @@ do_dist() {
 
 # Upload a .pkg to App Store Connect via altool, using whichever credentials are set.
 # Returns non-zero (and prints how to set creds) if no credentials are available.
+#
+# altool exits non-zero when the upload is rejected (a wrong API key role gives
+# FORBIDDEN_ERROR.ROLE_NOT_VALID). That status must be honoured — reporting success
+# regardless left "Upload submitted" on screen after a failed upload.
 upload_pkg() {
   local pkg="$1"
   if [[ -n "${ASC_KEY_ID:-}" && -n "${ASC_ISSUER_ID:-}" ]]; then
     info "Uploading to App Store Connect via API key $ASC_KEY_ID..."
-    xcrun altool --upload-app --type macos --file "$pkg" \
-      --api-key "$ASC_KEY_ID" --api-issuer "$ASC_ISSUER_ID"
-    success "Upload submitted. Watch App Store Connect -> your app -> Activity."
+    if ! xcrun altool --upload-app --type macos --file "$pkg" \
+           --api-key "$ASC_KEY_ID" --api-issuer "$ASC_ISSUER_ID"; then
+      error "Upload failed. The key needs a role that may upload builds (App Manager)."
+      echo "  Package kept at: $pkg"
+      echo "  Retry without rebuilding:  ./build.sh upload \"$pkg\""
+      return 1
+    fi
+    success "Upload accepted. Watch App Store Connect -> your app -> Activity."
     return 0
   elif [[ -n "${ASC_APPLE_ID:-}" && -n "${ASC_APP_PASSWORD:-}" ]]; then
     info "Uploading to App Store Connect as $ASC_APPLE_ID..."
-    xcrun altool --upload-app --type macos --file "$pkg" \
-      --username "$ASC_APPLE_ID" --password "$ASC_APP_PASSWORD"
-    success "Upload submitted. Watch App Store Connect -> your app -> Activity."
+    if ! xcrun altool --upload-app --type macos --file "$pkg" \
+           --username "$ASC_APPLE_ID" --password "$ASC_APP_PASSWORD"; then
+      error "Upload failed."
+      echo "  Package kept at: $pkg"
+      echo "  Retry without rebuilding:  ./build.sh upload \"$pkg\""
+      return 1
+    fi
+    success "Upload accepted. Watch App Store Connect -> your app -> Activity."
     return 0
   fi
   echo ""
@@ -440,7 +454,11 @@ EOF
   fi
   success "Exported App Store package: $pkg"
 
-  upload_pkg "$pkg" || true
+  # Keep a truthful exit status: the package is on disk either way, but a failed
+  # upload must not look like a completed submission.
+  if ! upload_pkg "$pkg"; then
+    exit 1
+  fi
 }
 
 # Build Release and produce a signed, notarized, stapled installer package for
