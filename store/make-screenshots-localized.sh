@@ -69,13 +69,67 @@ stop_app() {
   sleep 1
 }
 
-# One window with predictable content: drop the app's own session and the window
-# state macOS restores, so the launch below opens exactly the documents we pass.
+window_frame() {
+  osascript -e 'tell application "System Events" to tell process "Notepad" to get {position, size} of window 1' 2>/dev/null
+}
+
+# AppKit does not recreate this directory, and without it the persistent-UI manager
+# waits for a restoration that never completes: the app runs with no window at all
+# and nothing — not "New Window", not a document from Finder — can produce one.
+# Never delete it; make sure it exists.
+ensure_state_dir() {
+  mkdir -p "$CONTAINER/Library/Saved Application State"
+}
+
+# One window with predictable content: drop the app's own session so the launch below
+# opens exactly the documents we pass. The window *state* AppKit keeps is left alone.
 reset_state() {
+  ensure_state_dir
   rm -f  "$SESSIONS"/*.txt 2>/dev/null
   rm -rf "$SESSIONS/Windows" 2>/dev/null
   mkdir -p "$SESSIONS"
   printf '{"version":2,"selectedTabID":"","timestamp":0,"tabs":[]}' > "$SESSIONS/session.json"
+}
+
+# Wait for an accessible window, then bring it to the front. Every later step reads
+# "window 1", so give up loudly instead of letting osascript block on a missing window.
+await_window() {
+  local n=0 count
+  while [ "$n" -lt 30 ]; do
+    count=$(osascript -e 'tell application "System Events" to tell process "Notepad" to return count of windows' 2>/dev/null)
+    [ "${count:-0}" -gt 0 ] 2>/dev/null && break
+    sleep 0.5; n=$((n+1))
+  done
+  if [ "${count:-0}" -lt 1 ] 2>/dev/null; then
+    echo "     ! no window appeared — is '$CONTAINER/Library/Saved Application State' present?"
+    return 1
+  fi
+  osa 'tell application "System Events" to tell process "Notepad"
+        set frontmost to true
+        perform action "AXRaise" of window 1
+      end tell'
+  sleep 0.5
+}
+
+# A document is open when the window title carries the file name ("Notepad - X.md").
+# Launch Services does not always hand the documents to the instance we just started —
+# when it does not, the captured window shows a single empty Untitled tab, which is
+# useless as a store screenshot. Verify, and re-deliver before giving up.
+documents_open() {
+  local title
+  title=$(osascript -e 'tell application "System Events" to tell process "Notepad" to return name of window 1' 2>/dev/null)
+  case "$title" in *" - "*) return 0 ;; *) return 1 ;; esac
+}
+
+deliver_documents() { # $1, $2 = files
+  local attempt=0
+  while [ "$attempt" -lt 4 ]; do
+    documents_open && return 0
+    open -a "$APP" "$1" "$2" >/dev/null 2>&1
+    sleep 3
+    attempt=$((attempt+1))
+  done
+  documents_open
 }
 
 size_window() {
@@ -87,20 +141,24 @@ size_window() {
   sleep 0.8
 }
 
-window_frame() {
-  osascript -e 'tell application "System Events" to tell process "Notepad" to get {position, size} of window 1' 2>/dev/null
-}
 
 capture() { # $1 = destination png
   osa 'tell application "System Events" to set frontmost of process "Notepad" to true'
   sleep 0.6
   local f x y w h
   f=$(window_frame)
-  [ -n "$f" ] || { echo "     ! window not readable (Accessibility permission?)"; return 1; }
+  if [ -z "$f" ]; then
+    echo "     ! window not readable — grant Accessibility to this terminal"
+    return 1
+  fi
   x=$(echo "$f" | awk -F', *' '{print $1}'); y=$(echo "$f" | awk -F', *' '{print $2}')
   w=$(echo "$f" | awk -F', *' '{print $3}'); h=$(echo "$f" | awk -F', *' '{print $4}')
   screencapture -x -R"${x},${y},${w},${h}" "$1" 2>/dev/null
-  [ -s "$1" ] || { echo "     ! capture empty (Screen Recording permission?)"; return 1; }
+  if [ ! -s "$1" ]; then
+    echo "     ! capture produced nothing — grant Screen Recording to this terminal"
+    rm -f "$1"
+    return 1
+  fi
 }
 
 normalize() { # $1 = png, resized in place to exactly TARGET_W x TARGET_H
@@ -113,9 +171,8 @@ normalize() { # $1 = png, resized in place to exactly TARGET_W x TARGET_H
   sips --padToHeightWidth "$TARGET_H" "$TARGET_W" --padColor "$PAD" "$1" >/dev/null 2>&1
 }
 
-# The preview toggle carries no accessible label, so it is found by position: the
-# rightmost button in the tab-bar row. Falls back to the View menu by index, which
-# is language-independent (menu bar item 5, item 6).
+# The preview toggle carries no accessible label, so it is reached through the View
+# menu by index, which stays the same in every language (menu bar item 5, item 6).
 open_preview() {
   osa 'tell application "System Events" to tell process "Notepad"
         set frontmost to true
@@ -145,17 +202,24 @@ shots_for() { # $1 = store locale, $2 = app language code
   tail -n +2 "$md"    > "$dir/$n2"
   xattr -c "$dir/$n1" "$dir/$n2" 2>/dev/null
 
+  echo "  $locale ($lang)"
   stop_app
+  sleep 2                     # let Launch Services drop the old registration
   reset_state
-  open -n -a "$APP" --args -AppleLanguages "($lang)" >/dev/null 2>&1
+  # Documents and the language override go in the same launch: handing the files to a
+  # separate `open` lets Launch Services route them to another instance of the same
+  # bundle id, leaving the captured window on an empty Untitled tab.
+  open -n -a "$APP" "$dir/$n1" "$dir/$n2" --args -AppleLanguages "($lang)" >/dev/null 2>&1
   local n=0
   while ! app_running && [ "$n" -lt 30 ]; do sleep 0.5; n=$((n+1)); done
+  await_window || return 1
   sleep 3
-  open -a "$APP" "$dir/$n1" "$dir/$n2" >/dev/null 2>&1
-  sleep 3
+  if ! deliver_documents "$dir/$n1" "$dir/$n2"; then
+    echo "     ! documents never opened — skipped (would have shot an empty tab)"
+    return 1
+  fi
   size_window
 
-  echo "  $locale ($lang)"
   if capture "$dest/01-editor.png"; then normalize "$dest/01-editor.png"; echo "     01-editor.png"; fi
   open_preview
   size_window
