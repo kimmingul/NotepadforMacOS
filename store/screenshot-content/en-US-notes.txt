@@ -1,0 +1,12 @@
+name: Notes.txt
+Plain-text notes — no cloud
+
+Opens legacy .txt without broken characters, and lets you
+reopen it in another encoding from the status bar.
+
+Today
+  ☐  Tidy the draft
+  ☐  Back up the meeting notes
+  ☑  Notepad installed
+
+Unsaved tabs come back on the next launch.

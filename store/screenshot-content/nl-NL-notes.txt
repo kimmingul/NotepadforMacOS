@@ -1,0 +1,12 @@
+name: Notities.txt
+Notities in platte tekst — zonder cloud
+
+Opent oude .txt zonder kapotte tekens en laat ze via de
+statusbalk opnieuw openen in een andere codering.
+
+Vandaag
+  ☐  Concept opruimen
+  ☐  Vergadernotities back-uppen
+  ☑  Notepad ingesteld
+
+Niet-opgeslagen tabs komen terug bij de volgende start.

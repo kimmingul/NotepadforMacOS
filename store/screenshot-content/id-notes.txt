@@ -1,0 +1,12 @@
+name: Catatan.txt
+Catatan teks biasa — tanpa cloud
+
+Membuka .txt lama tanpa karakter rusak dan bisa dibuka
+ulang dengan pengodean lain dari bilah status.
+
+Hari ini
+  ☐  Merapikan draf
+  ☐  Cadangkan catatan rapat
+  ☑  Notepad terpasang
+
+Tab yang belum disimpan kembali saat dibuka lagi.

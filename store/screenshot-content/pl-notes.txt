@@ -1,0 +1,12 @@
+name: Notatki.txt
+Notatki w czystym tekście — bez chmury
+
+Otwiera stare .txt bez połamanych znaków i pozwala
+otworzyć je ponownie w innym kodowaniu z paska stanu.
+
+Dzisiaj
+  ☐  Uporządkować szkic
+  ☐  Kopia notatek ze spotkania
+  ☑  Notepad zainstalowany
+
+Niezapisane karty wrócą przy następnym uruchomieniu.

@@ -1,0 +1,12 @@
+name: Note.txt
+Note in testo semplice — senza cloud
+
+Apre i .txt storici senza caratteri rotti e permette di
+riaprirli con un'altra codifica dalla barra di stato.
+
+Oggi
+  ☐  Sistemare la bozza
+  ☐  Backup delle note della riunione
+  ☑  Notepad installato
+
+Le schede non salvate tornano al prossimo avvio.

@@ -1,0 +1,12 @@
+name: Notas.txt
+Notas en texto plano — sin nubes
+
+Abre .txt heredados sin caracteres roto s y vuelve a
+abrirlos con otra codificación desde la barra de estado.
+
+Hoy
+  ☐  Ordenar el borrador
+  ☐  Copia de las notas de la reunión
+  ☑  Notepad instalado
+
+Las pestañas sin guardar vuelven en el próximo inicio.

@@ -1,0 +1,12 @@
+name: Ghi chú.txt
+Ghi chú văn bản thuần — không cần đám mây
+
+Mở các .txt cũ không bị lỗi phông và cho phép mở lại
+bằng bảng mã khác từ thanh trạng thái.
+
+Hôm nay
+  ☐  Sắp xếp bản nháp
+  ☐  Sao lưu ghi chú họp
+  ☑  Đã cài Notepad
+
+Thẻ chưa lưu sẽ trở lại ở lần mở kế tiếp.

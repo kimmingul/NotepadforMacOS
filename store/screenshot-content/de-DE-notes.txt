@@ -1,0 +1,12 @@
+name: Notizen.txt
+Notizen in Klartext — ohne Cloud
+
+Öffnet alte .txt ohne kaputte Zeichen und lässt sie
+über die Statusleiste in anderer Codierung neu öffnen.
+
+Heute
+  ☐  Entwurf sortieren
+  ☐  Besprechungsnotizen sichern
+  ☑  Notepad eingerichtet
+
+Nicht gespeicherte Tabs kommen beim nächsten Start zurück.

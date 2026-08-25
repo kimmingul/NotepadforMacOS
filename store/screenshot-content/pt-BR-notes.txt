@@ -1,0 +1,12 @@
+name: Notas.txt
+Notas em texto puro — sem nuvem
+
+Abre .txt antigos sem caracteres quebrados e permite
+reabrir com outra codificação pela barra de status.
+
+Hoje
+  ☐  Organizar o rascunho
+  ☐  Backup das notas da reunião
+  ☑  Notepad instalado
+
+Abas não salvas voltam na próxima abertura.

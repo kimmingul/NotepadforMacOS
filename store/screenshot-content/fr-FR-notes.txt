@@ -1,0 +1,12 @@
+name: Notes.txt
+Notes en texte brut — sans cloud
+
+Ouvre les .txt anciens sans caractères cassés et
+réouvre-les avec un autre encodage depuis la barre d'état.
+
+Aujourd'hui
+  ☐  Reprendre le brouillon
+  ☐  Sauvegarder les notes de réunion
+  ☑  Notepad installé
+
+Les onglets non enregistrés reviennent au prochain lancement.
