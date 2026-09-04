@@ -37,6 +37,8 @@ Carthage/Build/
 
 # ---- Tooling / agents ----
 .omc/
+.omp/
+.xllm/
 
 # ---- Distribution output ----
 dist/

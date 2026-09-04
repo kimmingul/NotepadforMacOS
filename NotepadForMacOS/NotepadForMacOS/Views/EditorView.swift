@@ -89,6 +89,124 @@ final class NotepadTextView: NSTextView {
         return openable.isEmpty ? nil : openable
     }
 
+    // MARK: - Navigation Key Shortcuts (Home, End, PageUp, PageDown)
+
+    override func keyDown(with event: NSEvent) {
+        let isHome = event.specialKey == .home || event.keyCode == 115
+        let isEnd = event.specialKey == .end || event.keyCode == 119
+        let isPageUp = event.specialKey == .pageUp || event.keyCode == 116
+        let isPageDown = event.specialKey == .pageDown || event.keyCode == 121
+
+        guard isHome || isEnd || isPageUp || isPageDown else {
+            super.keyDown(with: event)
+            return
+        }
+
+        let relevantFlags = event.modifierFlags.intersection([.shift, .command, .control, .option])
+
+        // Option 키 조합은 기본 시스템 동작으로 위임
+        guard !relevantFlags.contains(.option) else {
+            super.keyDown(with: event)
+            return
+        }
+
+        if isHome {
+            handleHomeKey(modifiers: relevantFlags)
+            return
+        }
+
+        if isEnd {
+            handleEndKey(modifiers: relevantFlags)
+            return
+        }
+
+        if isPageUp {
+            handlePageUpKey(modifiers: relevantFlags, event: event)
+            return
+        }
+
+        if isPageDown {
+            handlePageDownKey(modifiers: relevantFlags, event: event)
+            return
+        }
+
+        super.keyDown(with: event)
+    }
+
+    private func handleHomeKey(modifiers: NSEvent.ModifierFlags) {
+        if modifiers.contains(.command) || modifiers.contains(.control) {
+            if modifiers.contains(.shift) {
+                moveToBeginningOfDocumentAndModifySelection(nil)
+            } else {
+                moveToBeginningOfDocument(nil)
+            }
+        } else if modifiers.contains(.shift) {
+            moveToBeginningOfLineAndModifySelection(nil)
+        } else {
+            moveToBeginningOfLine(nil)
+        }
+        scrollRangeToVisible(selectedRange())
+    }
+
+    private func handleEndKey(modifiers: NSEvent.ModifierFlags) {
+        if modifiers.contains(.command) || modifiers.contains(.control) {
+            if modifiers.contains(.shift) {
+                moveToEndOfDocumentAndModifySelection(nil)
+            } else {
+                moveToEndOfDocument(nil)
+            }
+        } else if modifiers.contains(.shift) {
+            moveToEndOfLineAndModifySelection(nil)
+        } else {
+            moveToEndOfLine(nil)
+        }
+        scrollRangeToVisible(selectedRange())
+    }
+
+    private func handlePageUpKey(modifiers: NSEvent.ModifierFlags, event: NSEvent) {
+        if modifiers.isEmpty {
+            pageUpWithCursor()
+        } else if modifiers == .shift {
+            pageUpAndModifySelection(nil)
+            scrollRangeToVisible(NSRange(location: selectedRange().location, length: 0))
+        } else {
+            super.keyDown(with: event)
+        }
+    }
+
+    private func handlePageDownKey(modifiers: NSEvent.ModifierFlags, event: NSEvent) {
+        if modifiers.isEmpty {
+            pageDownWithCursor()
+        } else if modifiers == .shift {
+            pageDownAndModifySelection(nil)
+            scrollRangeToVisible(NSRange(location: NSMaxRange(selectedRange()), length: 0))
+        } else {
+            super.keyDown(with: event)
+        }
+    }
+
+    private func pageUpWithCursor() {
+        let current = selectedRange()
+        if current.length > 0 {
+            setSelectedRange(NSRange(location: current.location, length: 0))
+        }
+        pageUpAndModifySelection(nil)
+        let targetLoc = selectedRange().location
+        setSelectedRange(NSRange(location: targetLoc, length: 0))
+        scrollRangeToVisible(selectedRange())
+    }
+
+    private func pageDownWithCursor() {
+        let current = selectedRange()
+        if current.length > 0 {
+            setSelectedRange(NSRange(location: NSMaxRange(current), length: 0))
+        }
+        pageDownAndModifySelection(nil)
+        let targetLoc = NSMaxRange(selectedRange())
+        setSelectedRange(NSRange(location: targetLoc, length: 0))
+        scrollRangeToVisible(selectedRange())
+    }
+
 }
 
 /// NSTextView 기반 에디터.
