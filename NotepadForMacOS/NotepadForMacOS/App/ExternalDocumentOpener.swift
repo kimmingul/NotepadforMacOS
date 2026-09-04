@@ -97,9 +97,15 @@ enum ExternalDocumentOpener {
         }
 
         if !unhandled.isEmpty {
-            // 창이 한 번이라도 있었다면(설정 창만 남은 상태 등) 새 창을 요청한다. 콜드 런치처럼
-            // 아직 창이 한 번도 없었으면 프레임워크가 곧 만들 창을 기다린다(창이 붙을 때 재시도).
-            EditorWindowOpener.shared.openWindow()
+            // 편집기 창이 하나도 *알려져 있지 않을* 때만 새 창을 요청한다(설정 창만 남은 상태).
+            //
+            // "화면에 붙은 창이 없다"로 판단하면 안 된다. 콜드 런치에서 첫 창은 onAppear 뒤에
+            // NSWindow에 붙으므로, 그 사이에 흘려보내기가 오면 창이 곧 생길 텐데도 하나를 더
+            // 만든다(실측: 파일 창 옆에 빈 창이 하나 더 떴다). 등록만 되고 아직 붙지 않은 창이
+            // 있으면 그 창이 붙을 때 다시 흘려보낸다.
+            if registry.isEmpty {
+                EditorWindowOpener.shared.openWindow()
+            }
             return unhandled
         }
 

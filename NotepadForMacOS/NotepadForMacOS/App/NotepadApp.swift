@@ -64,12 +64,11 @@ struct NotepadWindowView: View {
     @State private var presentationOwnerID = UUID()
 
     init(sessionID: UUID?) {
-        // 값 없는 창이 여러 개 생겨도 루트 세션은 하나만 갖는다. EditorSessionIdentity 참고.
-        // 클레임은 StateObject의 autoclosure 안에서 일어나야 한다. 뷰 struct는 여러 번
-        // 초기화되지만 StateObject는 창당 한 번만 만들어진다.
-        _tabManager = StateObject(
-            wrappedValue: TabManager(sessionID: EditorSessionIdentity.shared.resolve(sessionID))
-        )
+        // 모든 창은 자기 UUID 세션으로 시작한다. 루트 세션(다음 실행에서 복원되는 세션)은 화면에
+        // 실제로 붙은 첫 창이 넘겨받는다(EditorWindowRegistry / TabManager.adoptPrimarySession).
+        // 여기서 nil을 넘겨 루트를 배정하면 SwiftUI가 만들었다가 띄우지 않는 인스턴스가 루트를
+        // 차지할 수 있고, 값 없는 창이 여러 개면 전부 루트를 공유해 서로를 덮어쓴다.
+        _tabManager = StateObject(wrappedValue: TabManager(sessionID: sessionID ?? UUID()))
     }
 
     private var appVersion: String {
@@ -90,8 +89,6 @@ struct NotepadWindowView: View {
                 EditorWindowRegistry.shared.register(tabManager, window: nil)
                 EditorWindowOpener.shared.adopt(openWindow)
                 EditorWindowOpener.shared.noteWindowAppeared()
-                // 창이 생긴 다음부터 문서 열기 이벤트를 직접 받는다(설치는 한 번만 유효).
-                ExternalOpenEventHandler.shared.install()
                 ExternalDocumentOpener.flushPending()
                 evaluateOnboarding()
                 claimPendingOnboardingSheet()
