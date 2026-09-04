@@ -50,7 +50,7 @@ final class TabManager: ObservableObject {
 
     private var cancellables = Set<AnyCancellable>()
     private let sessionStore = SessionStore.shared
-    private let sessionID: UUID?
+    private var sessionID: UUID?
     private var terminationObserver: NSObjectProtocol?
     private var sessionResetObserver: NSObjectProtocol?
     private var pendingCursorState: CursorState?
@@ -326,6 +326,42 @@ final class TabManager: ObservableObject {
             return "file:\(identifier)"
         }
         return "path:" + resolved.path.precomposedStringWithCanonicalMapping
+    }
+
+    /// 이 창이 이미 그 파일의 탭을 갖고 있는지.
+    ///
+    /// 같은 파일은 앱 전체에서 창 하나만 소유한다(`EditorWindowRegistry.owner(ofFileAt:)`).
+    /// 판정 기준은 `identity(of:)`이므로 이름만 같고 디렉터리가 다른 파일은 다른 파일이다.
+    func hasTab(forFileAt url: URL) -> Bool {
+        let target = Self.identity(of: url)
+        return tabs.contains { $0.fileURL.map(Self.identity) == target }
+    }
+
+    /// 이 창이 루트 세션(`Sessions/`)을 갖는지. 다음 실행에서 복원되는 세션은 그것 하나다.
+    var ownsPrimarySession: Bool {
+        sessionID == nil
+    }
+
+    /// 실행 시 자동으로 생긴 빈 탭 하나뿐인지(사용자가 아무것도 하지 않은 창).
+    var holdsOnlyUntouchedPlaceholder: Bool {
+        tabs.count == 1 && tabs[0].isPlaceholder
+    }
+
+    /// 루트 세션을 이 창이 맡는다.
+    ///
+    /// 루트 세션은 원래 프로세스에서 처음 만들어지는 `TabManager`가 맡지만(`EditorSessionIdentity`),
+    /// SwiftUI가 만들었다가 창으로 띄우지 않은 뷰 인스턴스가 그 자리를 차지할 수 있다(실측:
+    /// 루트 세션이 비고, Finder로 연 파일이 복원 대상 밖의 창에 열렸다). 그러면 다음 실행에서
+    /// 복원할 세션을 아무 창도 갱신하지 않는다.
+    ///
+    /// 그래서 화면에 뜬 창 중 루트 세션 주인이 없으면 실행 직후에 한 번 넘겨받는다. 손대지 않은
+    /// 빈 창에서만 호출되므로 사용자의 내용을 덮어쓸 일은 없다.
+    func adoptPrimarySession() {
+        guard let previous = sessionID, holdsOnlyUntouchedPlaceholder else { return }
+        sessionID = nil
+        sessionStore.clearSession(sessionID: previous)
+        restoreFromSession()
+        forcePersist()
     }
 
     /// 현재 선택 탭 저장
