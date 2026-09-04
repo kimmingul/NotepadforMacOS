@@ -116,14 +116,14 @@ notepad,plain text,text editor,txt,tabs,session,restore,privacy,offline,spell,en
 
 ---
 
-## What's New (4000) — v1.2.3
+## What's New (4000) — v1.2.11
 
 ```
-16 UI languages. Still a plain-text editor.
+Opening a file from Finder now always uses one window.
 
-• Settings → Language: follow this Mac or pin a language
-• English, Korean, Japanese, Chinese (Simplified/Traditional), and 11 more
-• Changing the language relaunches Notepad
+• Launching Notepad by opening a document no longer shows extra empty windows
+• Opening a file while Notepad is running adds a tab to the window you are using
+• The same file is never open in two windows — Notepad switches to the one that already has it
 
 No AI. No accounts. Network only for allowed preview resources.
 ```
