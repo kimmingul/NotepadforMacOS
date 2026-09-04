@@ -19,7 +19,8 @@ enum NotepadDocumentActions {
 
 
         guard panel.runModal() == .OK, let url = panel.url else { return false }
-        return tabManager.openFile(url: url, preferredEncoding: preferredEncoding)
+        // 같은 파일을 이미 가진 창이 있으면 그 창이 연다(앱 전체에서 파일 하나당 창 하나).
+        return ExternalDocumentOpener.open([url], preferring: tabManager, preferredEncoding: preferredEncoding)
     }
 
     @discardableResult

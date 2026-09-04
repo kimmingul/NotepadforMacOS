@@ -169,7 +169,7 @@ struct EditorTextView: NSViewRepresentable {
         context.coordinator.textView = textView
         textView.registerForDraggedTypes([.fileURL])
         textView.onOpenDroppedFiles = { [tabManager] urls in
-            ExternalDocumentOpener.openNow(urls, in: tabManager)
+            ExternalDocumentOpener.open(urls, preferring: tabManager)
         }
 
         SourceHighlighter.apply(
