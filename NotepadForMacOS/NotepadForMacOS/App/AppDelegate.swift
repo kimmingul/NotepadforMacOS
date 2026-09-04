@@ -10,6 +10,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// `applicationShouldTerminate`에서 켠다.
     static private(set) var isTerminating = false
 
+    /// 문서 열기 이벤트를 프레임워크보다 먼저 받는다. 실행 중에 전달되는 문서(콜드 런치)에
+    /// SwiftUI가 창을 하나 더 만드는 것을 막는다. 자세한 이유는 `ExternalOpenEventHandler` 참고.
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        ExternalOpenEventHandler.shared.install()
+    }
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        ExternalOpenEventHandler.shared.install()
+    }
+
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         AppDelegate.isTerminating = true
         return .terminateNow
@@ -19,10 +29,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         true
     }
 
+    /// 평소에는 `ExternalOpenEventHandler`가 문서 열기 이벤트를 먼저 받아 이 메서드는 호출되지
+    /// 않는다. AppKit이 어떤 경로로든 자기 핸들러를 되살려 여기로 오더라도 같은 큐에 넣는다.
     func application(_ application: NSApplication, open urls: [URL]) {
         ExternalDocumentOpener.enqueue(urls)
     }
-
 }
 
 /// 진행 중인 입력기(IME) 조합 텍스트를 강제로 커밋하기 위한 도우미.

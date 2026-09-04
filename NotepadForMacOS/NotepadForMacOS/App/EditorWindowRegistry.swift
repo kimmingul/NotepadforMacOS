@@ -41,6 +41,11 @@ final class EditorWindowRegistry {
 
     /// 화면에 뜬 창 중 루트 세션 주인이 없으면 이 창이 넘겨받는다.
     ///
+    /// 창은 만들어질 때 자기 UUID 세션을 받고(`NotepadWindowView`), 루트 세션은 **실제로 화면에
+    /// 붙은** 창만 가질 수 있다. `StateObject`가 만들어지는 시점에 루트를 배정하면 SwiftUI가
+    /// 만들었다가 띄우지 않는 뷰 인스턴스가 루트를 차지해, 아무 창도 갱신하지 않는 세션이
+    /// 복원 대상이 된다(실측).
+    ///
     /// 실행 직후에만 한다. 나중에도 허용하면 사용자가 기본 창을 닫은 뒤 New Window로 만든 빈 창에
     /// 예전 탭들이 되살아난다.
     private func adoptPrimarySessionIfOrphaned(_ tabManager: TabManager) {
@@ -56,6 +61,12 @@ final class EditorWindowRegistry {
 
     func unregister(_ tabManager: TabManager) {
         entries.removeAll { $0.tabManager === tabManager || $0.tabManager == nil }
+    }
+
+    /// 알려진 편집기 창이 하나도 없는지(아직 창에 붙지 않은 것까지 포함해서 없음).
+    var isEmpty: Bool {
+        compact()
+        return entries.isEmpty
     }
 
     /// 화면에 있는 편집기 창만. 아직 창에 붙지 않은 항목은 파일을 열 대상이 될 수 없다.

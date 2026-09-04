@@ -67,11 +67,6 @@ final class TabManager: ObservableObject {
     init(sessionID: UUID? = nil) {
         self.sessionID = sessionID
 
-        // 기본(첫) 창에서 한 번, 오래된 보조 창 세션 디렉터리를 정리
-        if sessionID == nil {
-            sessionStore.pruneOrphanedWindowSessions()
-        }
-
         // 시작 시 세션 복원
         restoreFromSession()
 
@@ -347,19 +342,21 @@ final class TabManager: ObservableObject {
         tabs.count == 1 && tabs[0].isPlaceholder
     }
 
-    /// 루트 세션을 이 창이 맡는다.
+    /// 루트 세션(`Sessions/`, 다음 실행에서 복원되는 세션)을 이 창이 맡는다.
     ///
-    /// 루트 세션은 원래 프로세스에서 처음 만들어지는 `TabManager`가 맡지만(`EditorSessionIdentity`),
-    /// SwiftUI가 만들었다가 창으로 띄우지 않은 뷰 인스턴스가 그 자리를 차지할 수 있다(실측:
-    /// 루트 세션이 비고, Finder로 연 파일이 복원 대상 밖의 창에 열렸다). 그러면 다음 실행에서
-    /// 복원할 세션을 아무 창도 갱신하지 않는다.
+    /// 창은 만들어질 때 자기 UUID 세션으로 시작하고, 화면에 붙은 뒤 루트 주인이 없으면 이 메서드로
+    /// 넘겨받는다(`EditorWindowRegistry`). 만들어지는 시점에 루트를 배정하면 SwiftUI가 만들었다가
+    /// 띄우지 않는 뷰 인스턴스가 루트를 차지해, 아무 창도 갱신하지 않는 세션이 복원 대상이 되고
+    /// Finder로 연 파일이 복원되지 않는 세션에 기록된다(실측).
     ///
-    /// 그래서 화면에 뜬 창 중 루트 세션 주인이 없으면 실행 직후에 한 번 넘겨받는다. 손대지 않은
-    /// 빈 창에서만 호출되므로 사용자의 내용을 덮어쓸 일은 없다.
+    /// 손대지 않은 빈 창에서만 동작하므로 사용자의 내용을 덮어쓸 일은 없다. 지금까지 쓰던 빈 UUID
+    /// 세션은 지운다.
     func adoptPrimarySession() {
         guard let previous = sessionID, holdsOnlyUntouchedPlaceholder else { return }
         sessionID = nil
         sessionStore.clearSession(sessionID: previous)
+        // 루트 세션 주인은 프로세스에 하나이므로, 오래된 보조 창 세션 디렉터리 정리는 여기서 한 번 한다.
+        sessionStore.pruneOrphanedWindowSessions()
         restoreFromSession()
         forcePersist()
     }

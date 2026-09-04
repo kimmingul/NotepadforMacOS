@@ -18,28 +18,37 @@ final class ExternalOpenRoutingTests: XCTestCase {
         return url
     }
 
-    // MARK: - 세션 신원
+    // MARK: - 루트 세션 소유권
 
-    /// 루트 세션은 프로세스에서 처음 만들어진 창 하나만 갖는다.
-    /// 값 없는 창이 여러 개 생기면 나머지는 자기 UUID 세션을 받아야 한다.
-    func testOnlyFirstValuelessWindowClaimsRootSession() {
-        let identity = EditorSessionIdentity()
+    /// 창은 자기 UUID 세션으로 시작하고, 손대지 않은 빈 창만 루트 세션을 넘겨받는다.
+    func testUntouchedWindowAdoptsPrimarySession() {
+        let manager = TabManager(sessionID: UUID())
+        XCTAssertFalse(manager.ownsPrimarySession)
 
-        XCTAssertNil(identity.resolve(nil), "첫 창은 루트 세션을 갖는다")
+        manager.adoptPrimarySession()
 
-        let second = identity.resolve(nil)
-        let third = identity.resolve(nil)
-        XCTAssertNotNil(second, "두 번째 값 없는 창이 루트 세션을 또 쓰면 세션 파일을 서로 덮어쓴다")
-        XCTAssertNotNil(third)
-        XCTAssertNotEqual(second, third, "창마다 다른 세션이어야 한다")
+        XCTAssertTrue(manager.ownsPrimarySession, "빈 창은 루트 세션을 넘겨받아야 한다")
+        XCTAssertGreaterThanOrEqual(manager.tabs.count, 1, "루트 세션이 비어 있어도 탭 하나는 유지한다")
     }
 
-    /// New Window가 넘긴 값은 그대로 유지된다(창별 세션 복원).
-    func testExplicitWindowValueIsPreserved() {
-        let identity = EditorSessionIdentity()
-        let requested = UUID()
-        XCTAssertEqual(identity.resolve(requested), requested)
-        XCTAssertNil(identity.resolve(nil), "명시적 값은 루트 클레임을 소비하지 않는다")
+    /// 입력한 내용이 있는 창은 루트 세션을 넘겨받지 않는다(내용을 덮어쓰지 않는다).
+    func testTypedWindowNeverAdoptsPrimarySession() throws {
+        let manager = TabManager(sessionID: UUID())
+        let id = try XCTUnwrap(manager.selectedTabID)
+        manager.updateContent(for: id, newContent: "작성 중")
+
+        manager.adoptPrimarySession()
+
+        XCTAssertFalse(manager.ownsPrimarySession)
+        XCTAssertEqual(manager.document(with: id)?.content, "작성 중", "입력 내용이 남아 있어야 한다")
+    }
+
+    /// 이미 루트 세션 주인이면 다시 넘겨받을 것이 없다.
+    func testAdoptingTwiceIsHarmless() {
+        let manager = TabManager(sessionID: nil)
+        XCTAssertTrue(manager.ownsPrimarySession)
+        manager.adoptPrimarySession()
+        XCTAssertTrue(manager.ownsPrimarySession)
     }
 
     func testPrimarySessionFlagMatchesSessionID() {
