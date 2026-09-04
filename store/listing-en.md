@@ -116,14 +116,16 @@ notepad,plain text,text editor,txt,tabs,session,restore,privacy,offline,spell,en
 
 ---
 
-## What's New (4000) — v1.2.11
+## What's New (4000) — v1.2.12
 
 ```
-Opening a file from Finder now always uses one window.
+Fast cursor navigation shortcuts are now fully supported:
 
-• Launching Notepad by opening a document no longer shows extra empty windows
-• Opening a file while Notepad is running adds a tab to the window you are using
-• The same file is never open in two windows — Notepad switches to the one that already has it
+• Fn + Left / Right Arrow (Home / End) moves the cursor to the beginning or end of the current line
+• Fn + Shift + Left / Right Arrow extends text selection to the beginning or end of the line
+• Cmd / Ctrl + Home / End jumps straight to the beginning or end of the document
+• Fn + Up / Down Arrow (Page Up / Page Down) scrolls and advances the cursor page by page
+• Fn + Shift + Up / Down Arrow extends text selection page by page
 
 No AI. No accounts. Network only for allowed preview resources.
 ```
